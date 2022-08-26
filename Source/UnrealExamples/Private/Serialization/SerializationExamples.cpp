@@ -4,6 +4,8 @@
 #include "Serialization/SerializationExamples.h"
 #include "Serialization/MemoryWriter.h"
 #include "Serialization/MemoryReader.h"
+#include "Serialization/ArrayReader.h"
+#include "Serialization/ArrayWriter.h"
 
 #include "HAL/FileManager.h"
 
@@ -18,6 +20,8 @@ void SerializationExamples::AllExamples()
 	FileExample();
 
 	MemoryAndFileExample();
+
+	ArrayAchiveExample();
 }
 
 void SerializationExamples::BaseExample()
@@ -245,3 +249,38 @@ void SerializationExamples::MemoryAndFileExample()
 	UE_LOG(LogTemp, Log, TEXT("MemoryAndFileExample  End"));
 }
 
+void SerializationExamples::ArrayAchiveExample()
+{
+	UE_LOG(LogTemp, Log, TEXT("ArrayAchiveExample  Begin"));
+
+	// array writer is has both array & writer functions.
+	// it can be used without buffer array. (actually it has one inside.)
+	FArrayWriter Writer;
+	{
+		uint32 A = 15;
+		uint32 B = 75;
+		FString C = TEXT("blabla");
+
+		Writer << A;
+		Writer << B;
+		Writer << C;
+		UE_LOG(LogTemp, Log, TEXT("Writer Num : %d"), Writer.Num());
+	}
+
+	// same as array writer
+	FMemoryReader Reader(Writer);
+	{
+		uint32 A;
+		uint32 B;
+		FString C;
+
+		Reader << A;
+		Reader << B;
+		Reader << C;
+
+		UE_LOG(LogTemp, Log, TEXT("A : %u  B : %u  C : %s"), A, B, *C);
+	}
+
+
+	UE_LOG(LogTemp, Log, TEXT("ArrayAchiveExample  End"));
+}

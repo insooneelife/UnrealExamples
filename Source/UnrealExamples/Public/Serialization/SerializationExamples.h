@@ -22,6 +22,8 @@ public:
 	static void FileExample();
 
 	static void MemoryAndFileExample();
+
+	static void ArrayAchiveExample();
 };
 
 
