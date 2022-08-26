@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "Networking/TCPSocketClientExamples.h"
 #include "UnrealExamplesGameMode.generated.h"
 
 /**
@@ -17,4 +18,10 @@ class UNREALEXAMPLES_API AUnrealExamplesGameMode : public AGameMode
 public:
 
 	virtual void StartPlay() override;
+
+	virtual void Tick(float DeltaSeconds) override;
+
+private:
+
+	TCPSocketClientExamples Ex;
 };
