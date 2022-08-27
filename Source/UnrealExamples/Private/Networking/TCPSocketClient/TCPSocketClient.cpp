@@ -34,6 +34,12 @@ bool TCPSocketClient::Connect(FSocket* Socket, FString IPAddress, int PortNumber
 // if data size is too big for just one recv, it needs to be called multi times.
 bool TCPSocketClient::Receive(FSocket* Socket, uint8* Results, int32 Size)
 {
+	uint32 PendingDataSize;
+	if (!Socket->HasPendingData(PendingDataSize) || PendingDataSize <= 0)
+	{
+		return false;
+	}
+
 	int32 Offset = 0;
 	while (Size > 0)
 	{
@@ -93,7 +99,7 @@ bool TCPSocketClient::SendPacket(
 	// Send it, and make sure it sent it all
 	if (!Send(Socket, Ar.GetData(), Ar.Num()))
 	{
-		UE_LOG(LogSockets, Error, TEXT("Unable to send."));
+		UE_LOG(LogSockets, Error, TEXT("Unable To Send."));
 		return false;
 	}
 	return true;
@@ -113,7 +119,6 @@ bool TCPSocketClient::ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload)
 		return false;
 	}
 
-	// parse it as a header (doing any byte swapping as needed)
 	FMessageHeader Header;
 	{
 		FMemoryReader Reader(HeaderBuffer);
