@@ -20,7 +20,6 @@ bool TCPSocketClient::Connect(FSocket* Socket, FString IPAddress, int PortNumber
 
 	if (Socket->Connect(*Endpoint.ToInternetAddr()))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Socket Connected"));
 		return true;
 	}
 	else
@@ -145,7 +144,7 @@ void TCPSocketClient::Connect()
 
 	if (Connect(Socket, IPAddress, PortNumber))
 	{
-
+		UE_LOG(LogTemp, Log, TEXT("Socket Connected"));
 	}
 	else
 	{

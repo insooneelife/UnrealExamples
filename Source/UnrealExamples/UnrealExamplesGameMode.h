@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
-#include "Networking/TCPSocketClientExamples.h"
 #include "UnrealExamplesGameMode.generated.h"
 
 DECLARE_STATS_GROUP(TEXT("UnrealExamples"), STATGROUP_UnrealExamples, STATCAT_Advanced);
