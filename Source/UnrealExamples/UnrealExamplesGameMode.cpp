@@ -9,21 +9,13 @@ void AUnrealExamplesGameMode::StartPlay()
 	Super::StartPlay();
 
 	SerializationExamples::AllExamples();
-
-	
-
-	Ex.Init();
-
-	Ex.Connect();
-
-	Ex.Send(0, TEXT("This is sent from client."));
-	//Ex.DestroySocket();
 }
 
 
 void AUnrealExamplesGameMode::Tick(float DeltaSeconds)
 {
+	SCOPE_CYCLE_COUNTER(STAT_Tick)
+
 	Super::Tick(DeltaSeconds);
 
-	Ex.Poll();
 }
