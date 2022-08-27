@@ -7,9 +7,9 @@
 #include "Networking/TCPSocketClientExamples.h"
 #include "UnrealExamplesGameMode.generated.h"
 
-/**
- * 
- */
+DECLARE_STATS_GROUP(TEXT("UnrealExamples"), STATGROUP_UnrealExamples, STATCAT_Advanced);
+DECLARE_CYCLE_STAT(TEXT("Tick"), STAT_Tick, STATGROUP_UnrealExamples);
+
 UCLASS()
 class UNREALEXAMPLES_API AUnrealExamplesGameMode : public AGameMode
 {
@@ -22,6 +22,4 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-
-	TCPSocketClientExamples Ex;
 };
