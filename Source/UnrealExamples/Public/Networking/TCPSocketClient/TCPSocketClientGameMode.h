@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
-#include "TCPSocketClientExamples.generated.h"
+#include "TCPSocketClient.h"
+#include "TCPSocketClientGameMode.generated.h"
 
 
 UCLASS()
