@@ -193,8 +193,7 @@ void TCPSocketClient::Recv()
 		TArray<uint8> Payload;
 	if (TCPSocketClient::ReceivePacket(Socket, Payload))
 	{
-		FString Data((char*)Payload.GetData());
-		//UE_LOG(LogTemp, Error, TEXT("Recv data success.  data : %s  Payload : %d  size : %d"), *Data, Payload.Num(), Data.Len());
+		FString Data(Payload.Num(), (char*)Payload.GetData());
+		UE_LOG(LogTemp, Log, TEXT("Recv data success.  data : %s  Payload : %d  size : %d"), *Data, Payload.Num(), Data.Len());
 	}
 }
-
