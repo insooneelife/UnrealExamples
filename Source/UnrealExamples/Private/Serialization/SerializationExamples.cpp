@@ -22,6 +22,8 @@ void SerializationExamples::AllExamples()
 	MemoryAndFileExample();
 
 	ArrayAchiveExample();
+
+	FlatbuffersExample();
 }
 
 void SerializationExamples::BaseExample()
@@ -283,4 +285,17 @@ void SerializationExamples::ArrayAchiveExample()
 
 
 	UE_LOG(LogTemp, Log, TEXT("ArrayAchiveExample  End"));
+}
+
+
+
+void SerializationExamples::FlatbuffersExample()
+{
+	TArray<uint8> Payload;
+
+	FlatbuffersUtils::Serialize(Payload);
+
+	FMonsterData MonsterData;
+
+	FlatbuffersUtils::Deserialize(Payload, MonsterData);
 }

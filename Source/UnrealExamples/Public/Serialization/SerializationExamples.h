@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Animation/Skeleton.h"
+
+#include "FlatbuffersUtils.h"
+
 #include "SerializationExamples.generated.h"
 
 class UNREALEXAMPLES_API SerializationExamples
@@ -24,6 +27,8 @@ public:
 	static void MemoryAndFileExample();
 
 	static void ArrayAchiveExample();
+
+	static void FlatbuffersExample();
 };
 
 
