@@ -8,7 +8,10 @@ public class UnrealExamples : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Sockets", "Networking" });
+		PublicDependencyModuleNames.AddRange(new string[] 
+		{
+			"Core", "CoreUObject", "Engine", "InputCore", "Sockets", "Networking", "Json", "JsonUtilities", "HTTP"
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "Flatbuffers" });
 

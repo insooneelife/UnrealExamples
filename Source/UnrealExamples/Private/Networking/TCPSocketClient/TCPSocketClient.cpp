@@ -138,6 +138,12 @@ bool TCPSocketClient::ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload)
 	return false;
 }
 
+void TCPSocketClient::PrintSocketError(const FString& Text)
+{
+	ESocketErrors Err = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLastErrorCode();
+	const TCHAR* SocketErr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetSocketError(Err);
+	UE_LOG(LogSockets, Error, TEXT("%s  SocketErr : %s"), *Text, SocketErr);
+}
 
 void TCPSocketClient::Connect()
 {

@@ -50,6 +50,8 @@ public:
 
 	static bool ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload);
 
+	static void PrintSocketError(const FString& Text);
+
 	void Connect();
 
 	void DestroySocket();
