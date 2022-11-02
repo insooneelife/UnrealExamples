@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
+using System.IO;
 
 public class UnrealExamples : ModuleRules
 {
@@ -10,14 +11,24 @@ public class UnrealExamples : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] 
 		{
-			"Core", "CoreUObject", "Engine", "InputCore", "Sockets", "Networking", "Json", "JsonUtilities", "HTTP"
+			"Core", "CoreUObject", "Engine", "InputCore", "Sockets", "Networking", "Json", "JsonUtilities", "HTTP", 
+			"AudioCapture", "AudioCaptureCore", "AudioCaptureRtAudio", "UMG"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Flatbuffers" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Flatbuffers", "AudioCaptureEditor" });
+
+		PrivateDependencyModuleNames.AddRange(new string[] { "JsonUtilities", "Json" });
+
+		PrivateDependencyModuleNames.AddRange(new string[] { "Media", "MediaAssets", "MediaUtils", "ImageWriteQueue" });
+
+		
+		PrivateIncludePaths.AddRange(new string[] {
+			Path.GetFullPath(Path.Combine(EngineDirectory, "Source/Runtime/AudioCaptureImplementations/AudioCaptureRtAudio/Private"))
+		});
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
-		
+
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
 
