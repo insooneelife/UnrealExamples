@@ -34,12 +34,6 @@ bool TCPSocketClient::Connect(FSocket* Socket, FString IPAddress, int PortNumber
 // if data size is too big for just one recv, it needs to be called multi times.
 bool TCPSocketClient::Receive(FSocket* Socket, uint8* Results, int32 Size)
 {
-	uint32 PendingDataSize;
-	if (!Socket->HasPendingData(PendingDataSize) || PendingDataSize <= 0)
-	{
-		return false;
-	}
-
 	int32 Offset = 0;
 	while (Size > 0)
 	{
@@ -107,6 +101,13 @@ bool TCPSocketClient::SendPacket(
 
 bool TCPSocketClient::ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload)
 {
+	const int32 MaxPacketSize = 1024 * 1024;
+	uint32 PendingDataSize;
+	if (!Socket->HasPendingData(PendingDataSize) || PendingDataSize <= MaxPacketSize)
+	{
+		return false;
+	}
+
 	TArray<uint8> HeaderBuffer;
 	int32 HeaderSize = sizeof(FMessageHeader);
 	HeaderBuffer.AddZeroed(HeaderSize);
@@ -147,8 +148,12 @@ void TCPSocketClient::PrintSocketError(const FString& Text)
 
 void TCPSocketClient::Connect()
 {
+	int32 RecvBufferSize = 2 * 1024 * 1024;
+
 	Socket = FTcpSocketBuilder(TEXT("ClientSocket"));
 	Socket->SetNonBlocking(true);
+	
+	Socket->SetReceiveBufferSize(RecvBufferSize, RecvBufferSize);
 
 	FString IPAddress = TEXT("127.0.0.1");
 	uint16 PortNumber = 11000;
