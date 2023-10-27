@@ -8,7 +8,7 @@ void ATCPSocketClientGameMode::StartPlay()
 {
 	Super::StartPlay();
 
-	TCPClient.Connect();
+	TCPClient_NonBlocking.Connect();
 }
 
 
@@ -17,6 +17,6 @@ void ATCPSocketClientGameMode::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	UE_LOG(LogTemp, Log, TEXT("Tick"));
-	TCPClient.Send(0, TEXT("This is sent from client."));
-	TCPClient.Recv();
+	TCPClient_NonBlocking.Send(0, TEXT("This is sent from client."));
+	TCPClient_NonBlocking.Recv();
 }

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
-#include "TCPSocketClient.h"
+#include "TCPSocketClient_NonBlocking.h"
 #include "TCPSocketClientGameMode.generated.h"
 
 
@@ -21,6 +21,6 @@ public:
 
 private:
 
-	TCPSocketClient TCPClient;
+	FTCPSocketClient_NonBlocking TCPClient_NonBlocking;
 };
 

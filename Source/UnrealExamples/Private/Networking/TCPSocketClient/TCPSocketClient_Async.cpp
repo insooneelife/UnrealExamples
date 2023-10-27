@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Networking/TCPSocketClient/TCPSocketClient.h"
+#include "Networking/TCPSocketClient/TCPSocketClient_Async.h"
 #include "Sockets.h"
 #include "Common/TcpSocketBuilder.h"
 #include "Serialization/ArrayWriter.h"
 #include "SocketSubsystem.h"
 
-bool TCPSocketClient::Connect(FSocket* Socket, FString IPAddress, int PortNumber)
+bool FTCPSocketClient_Async::Connect(FSocket* Socket, FString IPAddress, int PortNumber)
 {
 	FIPv4Address IPAddr;
 	if (!FIPv4Address::Parse(IPAddress, IPAddr))
@@ -32,51 +32,28 @@ bool TCPSocketClient::Connect(FSocket* Socket, FString IPAddress, int PortNumber
 
 
 // if data size is too big for just one recv, it needs to be called multi times.
-bool TCPSocketClient::Receive(FSocket* Socket, uint8* Results, int32 Size)
+bool FTCPSocketClient_Async::Receive(FSocket* Socket, uint8* Results, int32 Size)
 {
-	int32 Offset = 0;
-	while (Size > 0)
-	{
-		int32 NumRead = 0;
-		Socket->Recv(Results + Offset, Size, NumRead);
-		check(NumRead <= Size);
-		// make sure we were able to read at least something (and not too much)
-		if (NumRead <= 0)
-		{
-			return false;
-		}
+	int32 NumRead = 0;
+	bool bSuccess = Socket->Recv(Results, Size, NumRead, ESocketReceiveFlags::Type::WaitAll);
 
-		// if we read a partial block, move along
-		Offset += NumRead;
-		Size -= NumRead;
-	}
-	return true;
+	return bSuccess;
 }
 
-bool TCPSocketClient::Send(FSocket* Socket, const uint8* Buffer, int32 Size)
+bool FTCPSocketClient_Async::Send(FSocket* Socket, const uint8* Buffer, int32 Size)
 {
-	while (Size > 0)
-	{
-		int32 BytesSent = 0;
-		if (!Socket->Send(Buffer, Size, BytesSent))
-		{
-			return false;
-		}
-
-		Size -= BytesSent;
-		Buffer += BytesSent;
-	}
-
-	return true;
+	int32 BytesSent = 0;
+	bool bSuccess = Socket->Send(Buffer, Size, BytesSent);
+	return bSuccess;
 }
 
 
-bool TCPSocketClient::SendPacket(FSocket* Socket, uint32 Type, const TArray<uint8>& Payload)
+bool FTCPSocketClient_Async::SendPacket(FSocket* Socket, uint32 Type, const TArray<uint8>& Payload)
 {
 	return SendPacket(Socket, Type, Payload.GetData(), Payload.Num());
 }
 
-bool TCPSocketClient::SendPacket(
+bool FTCPSocketClient_Async::SendPacket(
 	FSocket* Socket, uint32 Type, const uint8* Payload, int32 PayloadSize)
 {
 	// make a header for the payload
@@ -99,15 +76,8 @@ bool TCPSocketClient::SendPacket(
 	return true;
 }
 
-bool TCPSocketClient::ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload)
+bool FTCPSocketClient_Async::ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload)
 {
-	const int32 MaxPacketSize = 1024 * 1024;
-	uint32 PendingDataSize;
-	if (!Socket->HasPendingData(PendingDataSize) || PendingDataSize <= MaxPacketSize)
-	{
-		return false;
-	}
-
 	TArray<uint8> HeaderBuffer;
 	int32 HeaderSize = sizeof(FMessageHeader);
 	HeaderBuffer.AddZeroed(HeaderSize);
@@ -130,7 +100,6 @@ bool TCPSocketClient::ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload)
 	int32 PayloadSize = Header.Size;
 	OutPayload.SetNumZeroed(PayloadSize);
 
-
 	if (Receive(Socket, OutPayload.GetData(), OutPayload.Num()))
 	{
 		return true;
@@ -139,36 +108,34 @@ bool TCPSocketClient::ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload)
 	return false;
 }
 
-void TCPSocketClient::PrintSocketError(const FString& Text)
+void FTCPSocketClient_Async::PrintSocketError(const FString& Text)
 {
 	ESocketErrors Err = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLastErrorCode();
 	const TCHAR* SocketErr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetSocketError(Err);
 	UE_LOG(LogSockets, Error, TEXT("%s  SocketErr : %s"), *Text, SocketErr);
 }
 
-void TCPSocketClient::Connect()
+void FTCPSocketClient_Async::Connect()
 {
-	int32 RecvBufferSize = 2 * 1024 * 1024;
-
 	Socket = FTcpSocketBuilder(TEXT("ClientSocket"));
-	Socket->SetNonBlocking(true);
-	
-	Socket->SetReceiveBufferSize(RecvBufferSize, RecvBufferSize);
 
-	FString IPAddress = TEXT("127.0.0.1");
+	FString IPAddress = TEXT("172.20.42.193");
 	uint16 PortNumber = 11000;
 
 	if (Connect(Socket, IPAddress, PortNumber))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Socket Connected"));
+		Socket->SetNonBlocking(false);
 	}
 	else
 	{
+		UE_LOG(LogTemp, Error, TEXT("Socket Connect Failed."));
+
 		DestroySocket();
 	}
 }
 
-void TCPSocketClient::DestroySocket()
+void FTCPSocketClient_Async::DestroySocket()
 {
 	if (Socket)
 	{
@@ -185,24 +152,24 @@ void TCPSocketClient::DestroySocket()
 }
 
 
-void TCPSocketClient::Send(uint32 Type, const FString& Text)
+void FTCPSocketClient_Async::Send(uint32 Type, const FString& Text)
 {
 	SCOPE_CYCLE_COUNTER(STAT_Send)
 		FTCHARToUTF8 Convert(*Text);
 	FArrayWriter WriterArray;
 	WriterArray.Serialize((UTF8CHAR*)Convert.Get(), Convert.Length());
 
-	if (TCPSocketClient::SendPacket(Socket, Type, WriterArray))
+	if (FTCPSocketClient_Async::SendPacket(Socket, Type, WriterArray))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Sent Text : %s  Size : %d"), *Text, WriterArray.Num());
 	}
 }
 
-void TCPSocketClient::Recv()
+void FTCPSocketClient_Async::Recv()
 {
 	SCOPE_CYCLE_COUNTER(STAT_Recv)
 		TArray<uint8> Payload;
-	if (TCPSocketClient::ReceivePacket(Socket, Payload))
+	if (FTCPSocketClient_Async::ReceivePacket(Socket, Payload))
 	{
 		FString Data(Payload.Num(), (char*)Payload.GetData());
 		UE_LOG(LogTemp, Log, TEXT("Recv data success.  data : %s  Payload : %d  size : %d"), *Data, Payload.Num(), Data.Len());
