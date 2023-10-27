@@ -66,11 +66,11 @@ public class Flatbuffers : ModuleRules
 
 		string flatcPath = Path.Combine(FlatbuffersDir, "flatc.exe");
 		string flatcOutDir = Path.Combine(FlatbuffersDir, "generated");
-		string flatcInDir = Path.Combine(ThirdPartyDir, "localserve", "fbs");
+		string flatcInDir = Path.Combine(FlatbuffersDir, "data");
 
 		string[] fbsFiles = new string[]
 		{
-			"response.fbs", "stream.fbs"
+			"monster.fbs"
 		};
 
 		string files = "";
