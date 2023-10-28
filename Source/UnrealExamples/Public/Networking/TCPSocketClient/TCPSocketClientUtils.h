@@ -31,3 +31,15 @@ struct UNREALEXAMPLES_API FMessageHeader
 DECLARE_STATS_GROUP(TEXT("TCPSocketClient"), STATGROUP_TCPSocketClient, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Send"), STAT_Send, STATGROUP_TCPSocketClient);
 DECLARE_CYCLE_STAT(TEXT("Recv"), STAT_Recv, STATGROUP_TCPSocketClient);
+
+
+
+class UNREALEXAMPLES_API FTCPSocketClientUtils
+{
+public:
+	static bool Connect(FSocket* Socket, FString IPAddress, int PortNumber);
+
+	static void DestroySocket(FSocket* Socket);
+
+	static void PrintSocketError(const FString& Text);
+};

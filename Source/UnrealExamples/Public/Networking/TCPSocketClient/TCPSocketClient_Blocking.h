@@ -11,7 +11,6 @@ class FSocket;
 class UNREALEXAMPLES_API FTCPSocketClient_Blocking
 {
 public:
-	static bool Connect(FSocket* Socket, FString IPAddress, int PortNumber);
 
 	static bool Receive(FSocket* Socket, uint8* Results, int32 Size);
 
@@ -23,11 +22,9 @@ public:
 
 	static bool ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload);
 
-	static void PrintSocketError(const FString& Text);
-
 	void Connect();
 
-	void DestroySocket();
+	void Disconnect();
 
 	void Send(uint32 Type, const FString& Text);
 
