@@ -7,28 +7,7 @@
 #include "Serialization/ArrayWriter.h"
 #include "SocketSubsystem.h"
 
-bool FTCPSocketClient_NonBlocking::Connect(FSocket* Socket, FString IPAddress, int PortNumber)
-{
-	FIPv4Address IPAddr;
-	if (!FIPv4Address::Parse(IPAddress, IPAddr))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Ill-formed IP Address"));
-		return false;
-	}
 
-	FIPv4Endpoint Endpoint = FIPv4Endpoint(IPAddr, PortNumber);
-
-	if (Socket->Connect(*Endpoint.ToInternetAddr()))
-	{
-		return true;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Socket Connect Failed."));
-		return false;
-	}
-
-}
 
 
 // if data size is too big for just one recv, it needs to be called multi times.
@@ -139,12 +118,7 @@ bool FTCPSocketClient_NonBlocking::ReceivePacket(FSocket* Socket, TArray<uint8>&
 	return false;
 }
 
-void FTCPSocketClient_NonBlocking::PrintSocketError(const FString& Text)
-{
-	ESocketErrors Err = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLastErrorCode();
-	const TCHAR* SocketErr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetSocketError(Err);
-	UE_LOG(LogSockets, Error, TEXT("%s  SocketErr : %s"), *Text, SocketErr);
-}
+
 
 void FTCPSocketClient_NonBlocking::Connect()
 {
@@ -158,38 +132,29 @@ void FTCPSocketClient_NonBlocking::Connect()
 	FString IPAddress = TEXT("127.0.0.1");
 	uint16 PortNumber = 11000;
 
-	if (Connect(Socket, IPAddress, PortNumber))
+	if (FTCPSocketClientUtils::Connect(Socket, IPAddress, PortNumber))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Socket Connected"));
 	}
 	else
 	{
-		DestroySocket();
+		FTCPSocketClientUtils::DestroySocket(Socket);
 	}
 }
 
-void FTCPSocketClient_NonBlocking::DestroySocket()
+void FTCPSocketClient_NonBlocking::Disconnect()
 {
-	if (Socket)
-	{
-		if (Socket->GetConnectionState() == SCS_Connected)
-		{
-			Socket->Close();
-		}
-
-		ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
-		SocketSubsystem->DestroySocket(Socket);
-
-		Socket = nullptr;
-	}
+	FTCPSocketClientUtils::DestroySocket(Socket);
 }
 
 
 void FTCPSocketClient_NonBlocking::Send(uint32 Type, const FString& Text)
 {
-	SCOPE_CYCLE_COUNTER(STAT_Send)
-		FTCHARToUTF8 Convert(*Text);
+	SCOPE_CYCLE_COUNTER(STAT_Send);
+
+	FTCHARToUTF8 Convert(*Text);
 	FArrayWriter WriterArray;
+
 	WriterArray.Serialize((UTF8CHAR*)Convert.Get(), Convert.Length());
 
 	if (FTCPSocketClient_NonBlocking::SendPacket(Socket, Type, WriterArray))
@@ -200,8 +165,10 @@ void FTCPSocketClient_NonBlocking::Send(uint32 Type, const FString& Text)
 
 void FTCPSocketClient_NonBlocking::Recv()
 {
-	SCOPE_CYCLE_COUNTER(STAT_Recv)
-		TArray<uint8> Payload;
+	SCOPE_CYCLE_COUNTER(STAT_Recv);
+
+	TArray<uint8> Payload;
+
 	if (FTCPSocketClient_NonBlocking::ReceivePacket(Socket, Payload))
 	{
 		FString Data(Payload.Num(), (char*)Payload.GetData());
