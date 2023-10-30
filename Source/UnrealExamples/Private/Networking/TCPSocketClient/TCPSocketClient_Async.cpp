@@ -7,82 +7,26 @@
 #include "Serialization/ArrayWriter.h"
 #include "SocketSubsystem.h"
 
-
-// if data size is too big for just one recv, it needs to be called multi times.
-bool FTCPSocketClient_Async::Receive(FSocket* Socket, uint8* Results, int32 Size)
-{
-	int32 NumRead = 0;
-	bool bSuccess = Socket->Recv(Results, Size, NumRead, ESocketReceiveFlags::Type::WaitAll);
-
-	return bSuccess;
-}
-
-bool FTCPSocketClient_Async::Send(FSocket* Socket, const uint8* Buffer, int32 Size)
-{
-	int32 BytesSent = 0;
-	bool bSuccess = Socket->Send(Buffer, Size, BytesSent);
-	return bSuccess;
-}
+#include "Networking.h"
+#include "SocketSubsystemModule.h"
 
 
-bool FTCPSocketClient_Async::SendPacket(FSocket* Socket, uint32 Type, const TArray<uint8>& Payload)
-{
-	return SendPacket(Socket, Type, Payload.GetData(), Payload.Num());
-}
-
-bool FTCPSocketClient_Async::SendPacket(
-	FSocket* Socket, uint32 Type, const uint8* Payload, int32 PayloadSize)
+TSharedPtr<FBufferArchive> FTCPSocketClient_Async::CreatePacket(
+	uint32 InType, const uint8* InPayload, int32 InPayloadSize)
 {
 	// make a header for the payload
-	FMessageHeader Header(Type, PayloadSize);
+	FMessageHeader Header(InType, InPayloadSize);
 	constexpr static int32 HeaderSize = sizeof(FMessageHeader);
 
+	TSharedPtr<FBufferArchive> Packet = MakeShareable(new FBufferArchive());
+
 	// serialize out the header
-	FBufferArchive Ar;
-	Ar << Header;
+	(*Packet) << Header;
 
 	// append the payload bytes to send it in one network packet
-	Ar.Append(Payload, PayloadSize);
+	Packet->Append(InPayload, InPayloadSize);
 
-	// Send it, and make sure it sent it all
-	if (!Send(Socket, Ar.GetData(), Ar.Num()))
-	{
-		UE_LOG(LogSockets, Error, TEXT("Unable To Send."));
-		return false;
-	}
-	return true;
-}
-
-bool FTCPSocketClient_Async::ReceivePacket(FSocket* Socket, TArray<uint8>& OutPayload)
-{
-	TArray<uint8> HeaderBuffer;
-	int32 HeaderSize = sizeof(FMessageHeader);
-	HeaderBuffer.AddZeroed(HeaderSize);
-
-	// recv header
-	int32 BytesRead = 0;
-	if (!Receive(Socket, HeaderBuffer.GetData(), HeaderBuffer.Num()))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Recv Header Failed."));
-		return false;
-	}
-
-	FMessageHeader Header;
-	{
-		FMemoryReader Reader(HeaderBuffer);
-		Reader << Header;
-		UE_LOG(LogTemp, Log, TEXT("Recv Header Type : %d  Size : %d"), Header.Type, Header.Size);
-	}
-
-	int32 PayloadSize = Header.Size;
-	OutPayload.SetNumZeroed(PayloadSize);
-
-	if (Receive(Socket, OutPayload.GetData(), OutPayload.Num()))
-	{
-		return true;
-	}
-
-	return false;
+	return Packet;
 }
 
 void FTCPSocketClient_Async::Connect()
@@ -96,11 +40,11 @@ void FTCPSocketClient_Async::Connect()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Socket Connected"));
 		Socket->SetNonBlocking(false);
+
+		BeginSendPhase();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Socket Connect Failed."));
-
 		FTCPSocketClientUtils::DestroySocket(Socket);
 	}
 }
@@ -108,10 +52,11 @@ void FTCPSocketClient_Async::Connect()
 void FTCPSocketClient_Async::Disconnect()
 {
 	FTCPSocketClientUtils::DestroySocket(Socket);
+	Socket = nullptr;
 }
 
 
-void FTCPSocketClient_Async::Send(uint32 Type, const FString& Text)
+TSharedPtr<FBufferArchive> FTCPSocketClient_Async::CreatePacket(uint32 Type, const FString& Text)
 {
 	SCOPE_CYCLE_COUNTER(STAT_Send);
 
@@ -119,22 +64,161 @@ void FTCPSocketClient_Async::Send(uint32 Type, const FString& Text)
 	FArrayWriter WriterArray;
 
 	WriterArray.Serialize((UTF8CHAR*)Convert.Get(), Convert.Length());
-
-	if (FTCPSocketClient_Async::SendPacket(Socket, Type, WriterArray))
-	{
-		UE_LOG(LogTemp, Log, TEXT("Sent Text : %s  Size : %d"), *Text, WriterArray.Num());
-	}
+	TSharedPtr<FBufferArchive> Packet = CreatePacket(Type, WriterArray.GetData(), WriterArray.Num());
+	return Packet;
 }
 
-void FTCPSocketClient_Async::Recv()
+void FTCPSocketClient_Async::BeginSendPhase()
 {
-	SCOPE_CYCLE_COUNTER(STAT_Recv);
+	UE_LOG(LogTemp, Log, TEXT("BeginSendPhase"));
+	TSharedPtr<FBufferArchive> Packet = CreatePacket(0, TEXT("start packet"));
 
+
+	AsyncTask(ENamedThreads::AnyThread, [this, Packet]()
+		{
+			if (Socket == nullptr || this == nullptr)
+			{
+				return;
+			}
+
+			// send all things in queue
+			int32 NumSend;
+			bool bSuccess = Socket->Send(Packet->GetData(), Packet->Num(), NumSend);
+
+			AsyncTask(ENamedThreads::GameThread, [this, bSuccess]()
+				{
+					if (Socket == nullptr || this == nullptr)
+					{
+						return;
+					}
+
+					if (bSuccess)
+					{
+						// send complete
+						OnSendCompleted();
+						EndSendPhase();
+					}
+					else
+					{
+						// send failed
+						OnSendFailed();
+						EndSendPhase();
+					}
+				});
+		});
+}
+
+void FTCPSocketClient_Async::EndSendPhase()
+{
+	UE_LOG(LogTemp, Log, TEXT("EndSendPhase"));
+
+	BeginRecvPhase();
+}
+
+void FTCPSocketClient_Async::BeginRecvPhase()
+{
+	UE_LOG(LogTemp, Log, TEXT("BeginRecvPhase"));
+
+	AsyncTask(ENamedThreads::AnyThread, [this]()
+		{
+			if (Socket == nullptr || this == nullptr)
+			{
+				return;
+			}
+
+			TArray<uint8> HeaderBuffer;
+			int32 HeaderSize = sizeof(FMessageHeader);
+			HeaderBuffer.AddZeroed(HeaderSize);
+
+			// recv header
+			bool bSuccessRecvHeader = false;
+			int32 NumRead = 0;
+			bSuccessRecvHeader = Socket->Recv(
+				HeaderBuffer.GetData(), HeaderBuffer.Num(), NumRead, ESocketReceiveFlags::Type::WaitAll);
+
+			if (bSuccessRecvHeader)
+			{
+				// recv payload					
+				FMessageHeader Header;
+				FMemoryReader Reader(HeaderBuffer);
+				Reader << Header;
+
+				int32 PayloadSize = Header.Size;
+				TArray<uint8> Payload;
+				Payload.SetNumZeroed(PayloadSize);
+
+				bool bSuccessRecvPayload = false;
+				bSuccessRecvPayload = Socket->Recv(
+					Payload.GetData(), Payload.Num(), NumRead, ESocketReceiveFlags::Type::WaitAll);
+
+				AsyncTask(ENamedThreads::GameThread, [this, bSuccessRecvPayload, Payload]()
+					{
+						if (Socket == nullptr || this == nullptr)
+						{
+							return;
+						}
+
+						if (bSuccessRecvPayload)
+						{
+							OnRecvCompleted(Payload);
+							EndRecvPhase();
+						}
+						else
+						{
+							UE_LOG(LogTemp, Error, TEXT("Recv Payload Failed."));
+							OnRecvFailed();
+							EndRecvPhase();
+						}
+					});
+			}
+			else
+			{
+				AsyncTask(ENamedThreads::GameThread, [this]()
+					{
+						if (Socket == nullptr || this == nullptr)
+						{
+							return;
+						}
+
+						UE_LOG(LogTemp, Error, TEXT("Recv Header Failed."));
+						OnRecvFailed();
+						EndRecvPhase();
+					});
+			}
+		});
+}
+
+void FTCPSocketClient_Async::EndRecvPhase()
+{
+	UE_LOG(LogTemp, Log, TEXT("EndRecvPhase"));
+
+	BeginSendPhase();
+}
+
+void FTCPSocketClient_Async::OnSendCompleted()
+{
+	UE_LOG(LogTemp, Log, TEXT("OnSendCompleted"));
+}
+
+void FTCPSocketClient_Async::OnSendFailed()
+{
+	FString OutText;
+	FTCPSocketClientUtils::PrintSocketError(OutText);
+	UE_LOG(LogTemp, Log, TEXT("OnSendFailed  Error : %s"), *OutText);
+}
+
+void FTCPSocketClient_Async::OnRecvCompleted(const TArray<uint8>& InPayload)
+{
 	TArray<uint8> Payload;
+	Payload.Append(InPayload);
 
-	if (FTCPSocketClient_Async::ReceivePacket(Socket, Payload))
-	{
-		FString Data(Payload.Num(), (char*)Payload.GetData());
-		UE_LOG(LogTemp, Log, TEXT("Recv data success.  data : %s  Payload : %d  size : %d"), *Data, Payload.Num(), Data.Len());
-	}
+	FString Data(Payload.Num(), (char*)Payload.GetData());
+	UE_LOG(LogTemp, Log, TEXT("OnRecvCompleted  recv data success.  data : %s  Payload : %d  size : %d"), *Data, Payload.Num(), Data.Len());
+}
+
+void FTCPSocketClient_Async::OnRecvFailed()
+{
+	FString OutText;
+	FTCPSocketClientUtils::PrintSocketError(OutText);
+	UE_LOG(LogTemp, Log, TEXT("OnRecvFailed  Error : %s"), *OutText);
 }

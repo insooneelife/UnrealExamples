@@ -6,6 +6,7 @@
 #include "GameFramework/GameMode.h"
 #include "TCPSocketClient_NonBlocking.h"
 #include "TCPSocketClient_Blocking.h"
+#include "TCPSocketClient_Async.h"
 
 #include "TCPSocketClientGameMode.generated.h"
 
@@ -28,6 +29,8 @@ private:
 	FTCPSocketClient_NonBlocking TCPClient_NonBlocking;
 
 	FTCPSocketClient_Blocking TCPClient_Blocking;
+
+	FTCPSocketClient_Async TCPSocketClient_Async;
 
 };
 
