@@ -20,13 +20,23 @@ bool FTCPSocketClientUtils::Connect(FSocket* Socket, FString IPAddress, int Port
 
 	if (Socket->Connect(*Endpoint.ToInternetAddr()))
 	{
+		if (Socket->GetConnectionState() == ESocketConnectionState::SCS_Connected)
+		{
+			return true;
+		}
+	}
+
+	if (Socket->GetConnectionState() == ESocketConnectionState::SCS_Connected)
+	{
 		return true;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Socket Connect Failed."));
-		return false;
-	}
+
+	FString ErrorText;
+	PrintSocketError(ErrorText);
+
+	UE_LOG(LogTemp, Error, TEXT("Socket Connect Failed.  Error : %s  ConnectionState : %d"),
+		*ErrorText, (int32)Socket->GetConnectionState());
+	return false;
 
 }
 
@@ -41,16 +51,13 @@ void FTCPSocketClientUtils::DestroySocket(FSocket* Socket)
 
 			UE_LOG(LogTemp, Log, TEXT("Socket Closed."));
 		}
-
-		ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
-		SocketSubsystem->DestroySocket(Socket);
 	}
 }
 
 
-void FTCPSocketClientUtils::PrintSocketError(const FString& Text)
+void FTCPSocketClientUtils::PrintSocketError(FString& OutText)
 {
 	ESocketErrors Err = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLastErrorCode();
 	const TCHAR* SocketErr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetSocketError(Err);
-	UE_LOG(LogSockets, Error, TEXT("%s  SocketErr : %s"), *Text, SocketErr);
+	OutText = SocketErr;
 }

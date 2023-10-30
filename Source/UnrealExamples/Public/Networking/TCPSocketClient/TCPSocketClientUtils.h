@@ -41,5 +41,5 @@ public:
 
 	static void DestroySocket(FSocket* Socket);
 
-	static void PrintSocketError(const FString& Text);
+	static void PrintSocketError(FString& OutText);
 };
