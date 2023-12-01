@@ -7,15 +7,18 @@ void ATCPSocketClientGameMode::StartPlay()
 
 	//TCPClient_NonBlocking.Connect();
 	//TCPClient_Blocking.Connect();
-	TCPSocketClient_Async.Connect();
+	//TCPSocketClient_Async.Connect();
+
+	TCPSocketClient_AsyncFuture.Connect();
 }
 
 void ATCPSocketClientGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	//TCPClient_NonBlocking.Disconnect();
 	//TCPClient_Blocking.Disconnect();
+	//TCPSocketClient_Async.Disconnect();
 
-	TCPSocketClient_Async.Disconnect();
+	TCPSocketClient_AsyncFuture.Disconnect();
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -30,4 +33,6 @@ void ATCPSocketClientGameMode::Tick(float DeltaSeconds)
 
 	//TCPClient_Blocking.Send(0, TEXT("This is sent from client."));
 	//TCPClient_Blocking.Recv();
+
+	TCPSocketClient_AsyncFuture.Tick();
 }
