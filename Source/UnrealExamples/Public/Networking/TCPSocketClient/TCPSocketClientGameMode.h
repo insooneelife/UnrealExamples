@@ -7,6 +7,7 @@
 #include "TCPSocketClient_NonBlocking.h"
 #include "TCPSocketClient_Blocking.h"
 #include "TCPSocketClient_Async.h"
+#include "TCPSocketClient_AsyncFuture.h"
 
 #include "TCPSocketClientGameMode.generated.h"
 
@@ -31,6 +32,8 @@ private:
 	FTCPSocketClient_Blocking TCPClient_Blocking;
 
 	FTCPSocketClient_Async TCPSocketClient_Async;
+
+	FTCPSocketClient_AsyncFuture TCPSocketClient_AsyncFuture;
 
 };
 
