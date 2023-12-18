@@ -1,0 +1,10 @@
+# http://en.wikipedia.org/wiki/Consistent_hashing
+--distribution=consistent
+
+# Store one additional copy on each node.
+--number-of-replicas=2
+--namespace="my_foo"
+--server=localhost:11211
+--server=localhost:11212
+--server=localhost:11213
+--verify-key

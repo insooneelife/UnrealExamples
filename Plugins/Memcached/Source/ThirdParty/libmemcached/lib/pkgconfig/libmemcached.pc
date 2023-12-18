@@ -1,0 +1,13 @@
+prefix=C:/Program Files (x86)/libmemcached-awesome
+exec_prefix=C:/Program Files (x86)/libmemcached-awesome/bin
+libdir=C:/Program Files (x86)/libmemcached-awesome/lib
+includedir=C:/Program Files (x86)/libmemcached-awesome/include
+
+Name: libmemcached
+URL: https://awesomized.github.io/libmemcached/
+Description: libmemcached C/C++ library
+Version: 1.1.4
+Libs: -LC:/Program Files (x86)/libmemcached-awesome/lib -lmemcached -lmemcachedutil
+Cflags: -IC:/Program Files (x86)/libmemcached-awesome/include
+Requires: 
+Requires.private: 

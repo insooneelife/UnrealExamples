@@ -1,0 +1,23 @@
+- Stats:
+    - redo
+- Deprecations:
+    - UDP, disabled by default from memcached-1.5.6
+      soft (maybe only discourage in docs)
+    - API:
+        - memcached_delete(): expires param is obsolete
+Includes:
+    - Rename all headers with a standard name like `string.h` and `limits.h`.
+
+## Legacy:
+
+- Write a shell application (?)
+- Fix version in command line tools
+- Write (more) test cases for all command line tools (!!!)
+- Write some sort of "default" options bit for tools
+- More examples using libraries
+- Doxygen?
+- implement more connection/hash algo
+- implement compression
+- Revisit get() code (look for performance enhancements)
+- Add support for managing servers for clusters.
+- Build embedded version
