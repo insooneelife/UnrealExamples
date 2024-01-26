@@ -30,5 +30,8 @@ private:
 
 	AsyncCustomTaskExample AsyncCustomTaskExample;
 
-
+	AsyncRunnableExample AsyncRunnableExample;
 };
+
+
+
