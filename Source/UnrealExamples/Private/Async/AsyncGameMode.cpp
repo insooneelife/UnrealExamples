@@ -7,15 +7,17 @@ void AAsyncGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AsyncCustomTaskExample.Start();
+	//AsyncCustomTaskExample.Start();
 
-	AsyncTaskExample.Start();
+	//AsyncTaskExample.Start();
 
+
+	AsyncRunnableExample.Start();
 }
 
 void AAsyncGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	AsyncCustomTaskExample.End();
+	//AsyncCustomTaskExample.End();
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -26,5 +28,7 @@ void AAsyncGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	AsyncTaskExample.Tick();
+	//AsyncTaskExample.Tick();
+
+	AsyncRunnableExample.Tick();
 }
