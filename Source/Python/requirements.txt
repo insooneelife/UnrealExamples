@@ -1,0 +1,6 @@
+Flask
+gTTS
+openai-whisper
+ffmpeg-python
+requests
+python-dotenv

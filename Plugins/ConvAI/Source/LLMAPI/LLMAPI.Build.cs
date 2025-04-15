@@ -25,6 +25,7 @@ public class LLMAPI : ModuleRules
 				"HTTP",
 				"Json",
 				"JsonUtilities",
+				"ConvAI"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);

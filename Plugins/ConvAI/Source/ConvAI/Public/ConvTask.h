@@ -4,8 +4,6 @@
 
 
 
-// FDAITask is a base class representing tasks that an AI agent can perform.
-// Concrete tasks can be implemented by inheriting from this class.
 class CONVAI_API FConvTask
 {
 public:
