@@ -66,6 +66,12 @@ public:
 	TArray<uint8> AudioBuffer;
 };
 
+class FGlobalContext : public TSharedFromThis<FGlobalContext, ESPMode::ThreadSafe>
+{
+public:
+	TArray<FString> StackLlmMessages;
+};
+
 class FApiFlowContext : public TSharedFromThis<FApiFlowContext, ESPMode::ThreadSafe>
 {
 public:
@@ -109,9 +115,9 @@ class ConvAITaskGraphExamples
 public:
 
 	static void AllExamples(UWorld* World);
-	static void ApiFlowTaskGraphExample(UWorld* World);
-	static void DeviceFlowTaskGraphExample(UWorld* World);
-
+	static void TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* World);
+	static void TriggerDeviceProducerFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* World);
+	static void TriggerDeviceConsumerFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* World);
 
 	static void AudioInputTaskFunction(AudioInputTask_Result& OutResult);
 	static void SttApiTaskFunction(const TArray<uint8>& InAudioBuffer, FGraphEventRef FinishEvent, SttApiTask_Result& OutResult);
@@ -122,7 +128,8 @@ public:
 	static void LlmDeviceTaskFunction(const FString& InMessage, LlmDeviceTask_Result& OutResult);
 	static void TtsDeviceTaskFunction(const FString& InMessage, TtsDeviceTask_Result& OutResult);
 
-	static void GameTaskFunction(const TArray<uint8>& InAudioBuffer, const UWorld* InWorld);
+	static void PlayAudioGameTaskFunction(TSharedPtr<FGlobalContext> GlobalContext, const TArray<uint8>& InAudioBuffer, const UWorld* InWorld);
+	static void UpdateLlmOutputGameTaskFunction(TSharedPtr<FGlobalContext> GlobalContext, const FString& InLlmMessage, const UWorld* InWorld);
 };
 
 

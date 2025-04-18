@@ -21,13 +21,21 @@
 
 void ConvAITaskGraphExamples::AllExamples(UWorld* World)
 {
-	ApiFlowTaskGraphExample(World);
-	DeviceFlowTaskGraphExample(World);
+	TSharedPtr<FGlobalContext> GlobalContext = MakeShared<FGlobalContext>();
+
+	TriggerApiFlowTaskGraph(GlobalContext, World);
+	TriggerDeviceProducerFlowTaskGraph(GlobalContext, World);
 }
 
 
-void ConvAITaskGraphExamples::ApiFlowTaskGraphExample(UWorld* World)
+void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* World)
 {
+	if (!IsValid(World))
+	{
+		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerApiFlowTaskGraph] World is not valid."));
+		return;
+	}
+
 	TSharedPtr<FApiFlowContext> Context = MakeShared<FApiFlowContext>();
 	Context->Reset();
 
@@ -38,11 +46,11 @@ void ConvAITaskGraphExamples::ApiFlowTaskGraphExample(UWorld* World)
 		}, TStatId(), nullptr, ENamedThreads::AnyThread);
 
 	FGraphEventRef InputAudioGameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[Context, World]()
+		[GlobalContext, Context, World]()
 		{
 			if(Context->Audio_Result.bSuccess)
 			{
-				GameTaskFunction(Context->Audio_Result.AudioBuffer, World);
+				PlayAudioGameTaskFunction(GlobalContext, Context->Audio_Result.AudioBuffer, World);
 			}
 		}, TStatId(), AudioInputTask, ENamedThreads::GameThread);
 
@@ -93,17 +101,27 @@ void ConvAITaskGraphExamples::ApiFlowTaskGraphExample(UWorld* World)
 
 
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[Context, World]()
+		[GlobalContext, Context, World]()
 		{
 			if (Context->Tts_Result.bSuccess)
 			{
-				GameTaskFunction(Context->Tts_Result.AudioBuffer, World);
+				PlayAudioGameTaskFunction(GlobalContext, Context->Tts_Result.AudioBuffer, World);
 			}
+
+			// trigger this cycle again.
+			TriggerApiFlowTaskGraph(GlobalContext, World);
 		}, TStatId(), TtsApiEvent, ENamedThreads::GameThread);
 }
 
-void ConvAITaskGraphExamples::DeviceFlowTaskGraphExample(UWorld* World)
+void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
+	TSharedPtr<FGlobalContext> GlobalContext, UWorld* World)
 {
+	if (!IsValid(World))
+	{
+		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerDeviceProducerFlowTaskGraph] World is not valid."));
+		return;
+	}
+
 	TSharedPtr<FDeviceFlowContext> Context = MakeShared<FDeviceFlowContext>();
 	Context->Reset();
 
@@ -132,6 +150,31 @@ void ConvAITaskGraphExamples::DeviceFlowTaskGraphExample(UWorld* World)
 
 		}, TStatId(), SttTask, ENamedThreads::AnyThread);
 
+	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+		[GlobalContext, Context, World]()
+		{
+			if (Context->Tts_Result.bSuccess)
+			{
+				UpdateLlmOutputGameTaskFunction(GlobalContext, Context->Llm_Result.Message, World);
+				TriggerDeviceConsumerFlowTaskGraph(GlobalContext, World);
+			}
+			
+			// trigger this cycle again.
+			TriggerDeviceProducerFlowTaskGraph(GlobalContext, World);
+		}, TStatId(), LlmTask, ENamedThreads::GameThread);
+
+
+}
+
+void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* World)
+{	
+	if (!IsValid(World))
+	{
+		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerDeviceConsumerFlowTaskGraph] World is not valid."));
+		return;
+	}
+
+	TSharedPtr<FDeviceFlowContext> Context = MakeShared<FDeviceFlowContext>();
 	FGraphEventRef TtsTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[Context]()
 		{
@@ -139,19 +182,18 @@ void ConvAITaskGraphExamples::DeviceFlowTaskGraphExample(UWorld* World)
 			{
 				TtsDeviceTaskFunction(Context->Llm_Result.Message, Context->Tts_Result);
 			}
-		}, TStatId(), LlmTask, ENamedThreads::AnyThread);
+		}, TStatId(), nullptr, ENamedThreads::AnyThread);
 
 
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[Context, World]()
+		[GlobalContext, Context, World]()
 		{
 			if (Context->Tts_Result.bSuccess)
 			{
-				GameTaskFunction(Context->Tts_Result.AudioBuffer, World);
+				PlayAudioGameTaskFunction(GlobalContext, Context->Tts_Result.AudioBuffer, World);
 			}
-		}, TStatId(), TtsTask, ENamedThreads::GameThread);
+		}, TStatId(), TtsTask, ENamedThreads::GameThread);	
 }
-
 
 void ConvAITaskGraphExamples::AudioInputTaskFunction(AudioInputTask_Result& OutResult)
 {
@@ -308,7 +350,8 @@ void ConvAITaskGraphExamples::TtsDeviceTaskFunction(const FString& InMessage, Tt
 	if (FConvAIModule::LoadWavFileToBuffer(RelativePath, OutResult.AudioBuffer)){}
 }
 
-void ConvAITaskGraphExamples::GameTaskFunction(const TArray<uint8>& InAudioBuffer, const UWorld* InWorld)
+void ConvAITaskGraphExamples::PlayAudioGameTaskFunction(
+	TSharedPtr<FGlobalContext> GlobalContext, const TArray<uint8>& InAudioBuffer, const UWorld* InWorld)
 {
 	FConvAIModule::LogWithThreadInfo(TEXT("[GameTaskFunction] Task started."));
 	if (!IsValid(InWorld))
@@ -324,5 +367,17 @@ void ConvAITaskGraphExamples::GameTaskFunction(const TArray<uint8>& InAudioBuffe
 		FConvAIModule::LogWithThreadInfo(TEXT("[GameTaskFunction] Play sound."));
 		UGameplayStatics::PlaySound2D(InWorld, SoundWav);
 	}
+}
 
+
+void ConvAITaskGraphExamples::UpdateLlmOutputGameTaskFunction(
+	TSharedPtr<FGlobalContext> GlobalContext, const FString& InLlmMessage, const UWorld* InWorld)
+{
+	GlobalContext->StackLlmMessages.Add(InLlmMessage);
+
+	if(GlobalContext->StackLlmMessages.Num() > 3)
+	{
+		GlobalContext->StackLlmMessages[1];
+		GlobalContext->StackLlmMessages.Empty();
+	}
 }
