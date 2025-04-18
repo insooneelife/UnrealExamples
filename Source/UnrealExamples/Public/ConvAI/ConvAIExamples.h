@@ -5,15 +5,17 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 
+class UWorld;
+
 class ConvAIExamples
 {
 public:
 
-	static void AllExamples();
+	static void AllExamples(UWorld* World);
 
-	static void WhisperExample();
-	static void TTSExample();
-	static void ChatGPTByTaskExample();
+	static void WhisperExample(UWorld* World);
+	static void TTSExample(UWorld* World);
+	static void ChatGPTByTaskExample(UWorld* World);
 
 };
 

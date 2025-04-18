@@ -16,11 +16,11 @@ void UDedicateGameInstanceSubsystem::Initialize(FSubsystemCollectionBase& Collec
 	{
 		if (World->GetNetMode() == NM_Client)
 		{
-			UE_LOG(LogTemp, Error, TEXT("UDedicateGameInstanceSubsystem::Initialize  client"));
+			UE_LOG(LogTemp, Log, TEXT("UDedicateGameInstanceSubsystem::Initialize  client"));
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("UDedicateGameInstanceSubsystem::Initialize  server"));
+			UE_LOG(LogTemp, Log, TEXT("UDedicateGameInstanceSubsystem::Initialize  server"));
 		}
 	}
 }
@@ -34,11 +34,11 @@ void UDedicateGameInstanceSubsystem::Deinitialize()
 	{
 		if (World->GetNetMode() == NM_Client)
 		{
-			UE_LOG(LogTemp, Error, TEXT("UDedicateGameInstanceSubsystem::Deinitialize  client"));
+			UE_LOG(LogTemp, Log, TEXT("UDedicateGameInstanceSubsystem::Deinitialize  client"));
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("UDedicateGameInstanceSubsystem::Deinitialize  server"));
+			UE_LOG(LogTemp, Log, TEXT("UDedicateGameInstanceSubsystem::Deinitialize  server"));
 		}
 	}
 

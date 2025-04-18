@@ -14,11 +14,11 @@ void UDedicateWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		if (World->GetNetMode() == NM_Client)
 		{
-			UE_LOG(LogTemp, Error, TEXT("UDedicateWorldSubsystem::Initialize  client"));
+			UE_LOG(LogTemp, Log, TEXT("UDedicateWorldSubsystem::Initialize  client"));
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("UDedicateWorldSubsystem::Initialize  server"));
+			UE_LOG(LogTemp, Log, TEXT("UDedicateWorldSubsystem::Initialize  server"));
 		}
 	}
 
@@ -33,11 +33,11 @@ void UDedicateWorldSubsystem::Deinitialize()
 	{
 		if (World->GetNetMode() == NM_Client)
 		{
-			UE_LOG(LogTemp, Error, TEXT("UDedicateWorldSubsystem::Deinitialize  client"));
+			UE_LOG(LogTemp, Log, TEXT("UDedicateWorldSubsystem::Deinitialize  client"));
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("UDedicateWorldSubsystem::Deinitialize  server"));
+			UE_LOG(LogTemp, Log, TEXT("UDedicateWorldSubsystem::Deinitialize  server"));
 		}
 	}
 

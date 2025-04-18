@@ -11,7 +11,7 @@ void AUnrealExamplesGameMode::StartPlay()
 
 	//SerializationExamples::AllExamples();
 
-	ConvAIExamples::AllExamples();
+	ConvAIExamples::AllExamples(GetWorld());
 }
 
 

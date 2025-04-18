@@ -10,10 +10,12 @@ import tempfile
 app = Flask(__name__)
 
 
-@app.route("/tts", methods=["GET"])
+@app.route("/tts", methods=["POST"])
 def tts():
     data = request.get_json()
     text = data.get("data", "") if data else ""
+
+    print(f"tts request with data. {len(text)}")
 
     if not text:
         return {"error": "No text provided"}, 400

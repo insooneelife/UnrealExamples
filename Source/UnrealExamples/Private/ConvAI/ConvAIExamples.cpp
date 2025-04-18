@@ -2,23 +2,30 @@
 
 
 #include "ConvAI/ConvAIExamples.h"
-//#include "STTAPI/Public/WhisperUtils.h"
-//#include "ConvAI/Public/ConvAIModule.h"
-//#include "TtsUtils.h"
+#include "WhisperUtils.h"
+#include "ConvAIModule.h"
+#include "TtsUtils.h"
 #include "Http.h"
+#include "Misc/Paths.h"
 
+#include "Async/Async.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundWave.h"
+#include "Sound/SoundWaveProcedural.h"
+#include "Audio.h"
+#include "Engine/World.h"
 
-void ConvAIExamples::AllExamples()
+void ConvAIExamples::AllExamples(UWorld* World)
 {
-	WhisperExample();
-	TTSExample();
-	ChatGPTByTaskExample();
+	WhisperExample(World);
+	TTSExample(World);
+	ChatGPTByTaskExample(World);
 }
 
 
-void ConvAIExamples::WhisperExample()
+void ConvAIExamples::WhisperExample(UWorld* World)
 {
-/*
+
 	FString RelativePath = FPaths::ProjectDir() / TEXT("Source/Python/output/audio.wav");
 	TArray<uint8> Buffer;
 	if (!FConvAIModule::LoadWavFileToBuffer(RelativePath, Buffer))
@@ -41,18 +48,18 @@ void ConvAIExamples::WhisperExample()
 			FWhisperResponse OutResponse;
 			if (FWhisperUtils::ParseResponse(InResponse, OutResponse))
 			{
-				UE_LOG(LogTemp, Error, TEXT("%s"), *OutResponse.text);
+				UE_LOG(LogTemp, Log, TEXT("WhisperExample  %s"), *OutResponse.text);
 			}
 		});
 
 	// Execute request
 	Request->ProcessRequest();
-	*/
+	
 }
 
-void ConvAIExamples::TTSExample()
+void ConvAIExamples::TTSExample(UWorld* World)
 {
-/*
+
 	FTTSRequestBody Body;
 	Body.Data = "hello, my name is gjklagjflkdgjdklf.";
 
@@ -60,24 +67,38 @@ void ConvAIExamples::TTSExample()
 
 	// Set response callback
 	Request->OnProcessRequestComplete().BindLambda(
-		[](FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bWasSuccessful)
+		[World](FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bWasSuccessful)
 		{
 			if (!bWasSuccessful || !InResponse.IsValid())
+			{
+				UE_LOG(LogTemp, Error, TEXT("TTS Response failed."));
+				return;
+			}
+
+			if(!IsValid(World))
 			{
 				return;
 			}
 
-			const TArray<uint8>& AudioBuffer = InResponse->GetContent();
-			UE_LOG(LogTemp, Error, TEXT("AudioBuffer : %d"), AudioBuffer.Num());
 
+			const TArray<uint8>& AudioBuffer = InResponse->GetContent();
+			UE_LOG(LogTemp, Log, TEXT("TTSExample  AudioBuffer : %d"), AudioBuffer.Num());
+
+			USoundWaveProcedural* SoundWav = FConvAIModule::CreateSoundWaveFromWav(AudioBuffer);
+
+			if (IsValid(SoundWav))
+			{
+				UE_LOG(LogTemp, Log, TEXT("TTSExample  Play sound."));
+				UGameplayStatics::PlaySound2D(World, SoundWav);
+			}
 		});
 
 	// Execute request
 	Request->ProcessRequest();
-	*/
+	
 }
 
-void ConvAIExamples::ChatGPTByTaskExample()
+void ConvAIExamples::ChatGPTByTaskExample(UWorld* World)
 {
 
 }
