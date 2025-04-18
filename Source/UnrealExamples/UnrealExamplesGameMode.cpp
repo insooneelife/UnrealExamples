@@ -4,6 +4,7 @@
 #include "UnrealExamplesGameMode.h"
 #include "Serialization/SerializationExamples.h"
 #include "ConvAI/ConvAIExamples.h"
+#include "ConvAI/ConvAITaskGraphExamples.h"
 
 void AUnrealExamplesGameMode::StartPlay()
 {
@@ -11,7 +12,9 @@ void AUnrealExamplesGameMode::StartPlay()
 
 	//SerializationExamples::AllExamples();
 
-	ConvAIExamples::AllExamples(GetWorld());
+	//ConvAIExamples::AllExamples(GetWorld());
+
+	ConvAITaskGraphExamples::ConvAITaskGraphExample(GetWorld());
 }
 
 

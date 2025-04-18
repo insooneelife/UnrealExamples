@@ -30,6 +30,8 @@ public:
 
     static bool LoadWavFileToBuffer(const FString& FilePath, TArray<uint8>& OutBuffer);
 
+
     static void LogWithThreadInfo(const FString& Log);
 
+	static void LogErrorWithThreadInfo(const FString& Log);
 }; 

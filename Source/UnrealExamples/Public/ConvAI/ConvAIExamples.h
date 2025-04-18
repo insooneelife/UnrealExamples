@@ -15,8 +15,5 @@ public:
 
 	static void WhisperExample(UWorld* World);
 	static void TTSExample(UWorld* World);
-	static void ChatGPTByTaskExample(UWorld* World);
-
+	static void ChatGPTExample(UWorld* World);
 };
-
-

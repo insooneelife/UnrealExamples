@@ -2,9 +2,13 @@
 
 
 #include "ConvAI/ConvAIExamples.h"
-#include "WhisperUtils.h"
+
 #include "ConvAIModule.h"
 #include "TtsUtils.h"
+#include "WhisperUtils.h"
+#include "LLMAPITask.h"
+
+
 #include "Http.h"
 #include "Misc/Paths.h"
 
@@ -14,12 +18,17 @@
 #include "Sound/SoundWaveProcedural.h"
 #include "Audio.h"
 #include "Engine/World.h"
+#include "HAL/PlatformProcess.h"
+#include "Async/TaskGraphInterfaces.h"
+
+
+
 
 void ConvAIExamples::AllExamples(UWorld* World)
 {
 	WhisperExample(World);
 	TTSExample(World);
-	ChatGPTByTaskExample(World);
+	ChatGPTExample(World);
 }
 
 
@@ -98,7 +107,36 @@ void ConvAIExamples::TTSExample(UWorld* World)
 	
 }
 
-void ConvAIExamples::ChatGPTByTaskExample(UWorld* World)
+void ConvAIExamples::ChatGPTExample(UWorld* World)
 {
+	FString Message = TEXT("tell me about what llm is.");
+	FString APIKey = FChatGPTUtils::GetAPIKey();
+	TSharedRef<IHttpRequest> Request = FChatGPTUtils::CreateRequest(APIKey, Message);
 
+	Request->OnProcessRequestComplete().BindLambda(
+		[](FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bWasSuccessful)
+		{
+			if (!bWasSuccessful || !InResponse.IsValid())
+			{
+				return;
+			}
+
+			FChatGPTResponse ResponseData;
+			if (FChatGPTUtils::ParseResponse(InResponse, ResponseData))
+			{
+				if(ResponseData.choices.Num() > 0 )
+				{
+					UE_LOG(LogTemp, Log, TEXT("LLM response.  %s"), *ResponseData.choices[0].message.content);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("Empty message.  check your api key."));
+				}
+			}
+
+		});
+
+	// Execute request
+	Request->ProcessRequest();
 }
+

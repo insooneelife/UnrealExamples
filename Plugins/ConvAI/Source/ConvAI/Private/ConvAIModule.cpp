@@ -101,13 +101,20 @@ bool FConvAIModule::LoadWavFileToBuffer(const FString& FilePath, TArray<uint8>& 
 	return true;
 }
 
-void FConvAIModule::LogWithThreadInfo(const FString& Log)
+void FConvAIModule::LogWithThreadInfo(const FString& LogMsg)
 {
 	uint32 ThreadId = FPlatformTLS::GetCurrentThreadId();
 	FString ThreadName = FThreadManager::Get().GetThreadName(ThreadId);
-	UE_LOG(LogTemp, Log, TEXT("ThreadId: %d  ThreadName: %s\n"), ThreadId, *ThreadName, *Log);
+	UE_LOG(LogTemp, Log, TEXT("%s  ThreadId: %d  ThreadName: %s"), *LogMsg, ThreadId, *ThreadName);
 }
 
+
+void FConvAIModule::LogErrorWithThreadInfo(const FString& LogMsg)
+{
+	uint32 ThreadId = FPlatformTLS::GetCurrentThreadId();
+	FString ThreadName = FThreadManager::Get().GetThreadName(ThreadId);
+	UE_LOG(LogTemp, Error, TEXT("%s  ThreadId: %d  ThreadName: %s"), *LogMsg, ThreadId, *ThreadName);
+}
 
 
 #undef LOCTEXT_NAMESPACE
