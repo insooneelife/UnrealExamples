@@ -5,6 +5,7 @@
 #include "Sockets.h"
 #include "Common/TcpSocketBuilder.h"
 #include "Serialization/ArrayWriter.h"
+#include "Serialization/MemoryReader.h"
 #include "SocketSubsystem.h"
 
 
@@ -38,7 +39,7 @@ bool FTCPSocketClient_Blocking::SendPacket(
 	constexpr static int32 HeaderSize = sizeof(FMessageHeader);
 
 	// serialize out the header
-	FBufferArchive Ar;
+	FArrayWriter Ar;
 	Ar << Header;
 
 	// append the payload bytes to send it in one network packet

@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Stats/Stats.h"
+
+class FSocket;
 
 struct UNREALEXAMPLES_API FMessageHeader
 {

@@ -1,5 +1,6 @@
 #include "Async/AsyncTaskExample.h"
 #include "HAL/ThreadManager.h"
+#include "Async/Async.h"
 
 void AsyncTaskExample::Start()
 {

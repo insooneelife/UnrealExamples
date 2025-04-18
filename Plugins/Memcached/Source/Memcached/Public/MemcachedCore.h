@@ -2,6 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Stats/Stats.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogMemcached, Log, All);
 DECLARE_STATS_GROUP(TEXT("Memcached"), STATGROUP_Memcached, STATCAT_Advanced);

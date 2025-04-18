@@ -1,5 +1,6 @@
 #include "Audio/AudioUtils.h"
 #include "Sound/SoundWaveProcedural.h"
+#include "Serialization/ArrayWriter.h"
 
 FAudioData AudioUtils::AudioData;
 
@@ -35,4 +36,48 @@ USoundWave* AudioUtils::RawWaveToSoundWave(
 	}
 
 	return Sound;
+}
+
+void AudioUtils::SerializeWaveFile(
+	TArray<uint8>& OutWaveFileData,
+	const uint8* InPCMData,
+	int32 NumBytes,
+	int32 NumChannels,
+	int32 SampleRate,
+	int32 BitsPerSample)
+{
+	OutWaveFileData.Reset();
+	FArrayWriter Ar;
+	int32 ByteRate = SampleRate * NumChannels * BitsPerSample / 8;
+	int32 BlockAlign = NumChannels * BitsPerSample / 8;
+	int32 DataSize = NumBytes;
+	int32 ChunkSize = 36 + DataSize;
+
+	// RIFF Header
+	Ar.Serialize((void*)"RIFF", 4);
+	Ar << ChunkSize;
+	Ar.Serialize((void*)"WAVE", 4);
+
+	// fmt subchunk
+	Ar.Serialize((void*)"fmt ", 4);
+	int32 Subchunk1Size = 16;
+	int16 AudioFormat = 1; // PCM
+	Ar << Subchunk1Size;
+	Ar << AudioFormat;
+	Ar << NumChannels;
+	Ar << SampleRate;
+	Ar << ByteRate;
+	Ar << BlockAlign;
+	Ar << BitsPerSample;
+
+	// data subchunk
+	Ar.Serialize((void*)"data", 4);
+	Ar << DataSize;
+
+	// PCM data
+	Ar.Serialize((void*)InPCMData, NumBytes);
+
+	// Copy to output
+	OutWaveFileData = Ar;
+	
 }

@@ -2,6 +2,7 @@
 
 
 #include "Dedicate/DedicateGameInstanceSubsystem.h"
+#include "Engine/World.h"
 
 
 

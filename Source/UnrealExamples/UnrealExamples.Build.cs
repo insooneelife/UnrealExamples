@@ -12,7 +12,7 @@ public class UnrealExamples : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] 
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "Sockets", "Networking", "Json", "JsonUtilities", "HTTP", 
-			"AudioCapture", "AudioCaptureCore", "AudioCaptureRtAudio", "UMG"
+			"AudioCapture", "AudioCaptureCore", "AudioCaptureRtAudio", "UMG"/*, "ConvAI", "LLMAPI", "TTSAPI", "STTAPI"*/
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "Flatbuffers", "AudioCaptureEditor" });

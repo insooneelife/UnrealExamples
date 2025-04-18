@@ -2,7 +2,7 @@
 
 
 #include "Dedicate/DedicateWorldSubsystem.h"
-
+#include "Engine/World.h"
 
 void UDedicateWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

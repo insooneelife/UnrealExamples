@@ -36,4 +36,12 @@ public:
 
 	static USoundWave* RawWaveToSoundWave(
 		const uint8* InWaveData, int32 InWaveDataSize, uint32 InSampleRate, uint16 InNumChannels); 
+
+	static void SerializeWaveFile(
+		TArray<uint8>& OutWaveFileData,
+		const uint8* InPCMData,
+		int32 NumBytes,
+		int32 NumChannels,
+		int32 SampleRate,
+		int32 BitsPerSample = 16);
 };

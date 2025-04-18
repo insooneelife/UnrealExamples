@@ -4,6 +4,8 @@
 #include "Audio/AudioTestGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundWaveProcedural.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 
 
 AAudioTestGameMode::AAudioTestGameMode()

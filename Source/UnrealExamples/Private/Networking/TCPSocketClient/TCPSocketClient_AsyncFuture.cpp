@@ -11,14 +11,14 @@
 #include "SocketSubsystemModule.h"
 
 
-TSharedPtr<FBufferArchive> FTCPSocketClient_AsyncFuture::CreatePacket(
+TSharedPtr<FArrayWriter> FTCPSocketClient_AsyncFuture::CreatePacket(
 	uint32 InType, const uint8* InPayload, int32 InPayloadSize)
 {
 	// make a header for the payload
 	FMessageHeader Header(InType, InPayloadSize);
 	constexpr static int32 HeaderSize = sizeof(FMessageHeader);
 
-	TSharedPtr<FBufferArchive> Packet = MakeShareable(new FBufferArchive());
+	TSharedPtr<FArrayWriter> Packet = MakeShareable(new FArrayWriter());
 
 	// serialize out the header
 	(*Packet) << Header;
@@ -56,7 +56,7 @@ void FTCPSocketClient_AsyncFuture::Disconnect()
 }
 
 
-TSharedPtr<FBufferArchive> FTCPSocketClient_AsyncFuture::CreatePacket(uint32 Type, const FString& Text)
+TSharedPtr<FArrayWriter> FTCPSocketClient_AsyncFuture::CreatePacket(uint32 Type, const FString& Text)
 {
 	SCOPE_CYCLE_COUNTER(STAT_Send);
 
@@ -64,7 +64,7 @@ TSharedPtr<FBufferArchive> FTCPSocketClient_AsyncFuture::CreatePacket(uint32 Typ
 	FArrayWriter WriterArray;
 
 	WriterArray.Serialize((UTF8CHAR*)Convert.Get(), Convert.Length());
-	TSharedPtr<FBufferArchive> Packet = CreatePacket(Type, WriterArray.GetData(), WriterArray.Num());
+	TSharedPtr<FArrayWriter> Packet = CreatePacket(Type, WriterArray.GetData(), WriterArray.Num());
 	return Packet;
 }
 
@@ -91,7 +91,7 @@ void FTCPSocketClient_AsyncFuture::Tick()
 
 TFuture<FRecvResult> FTCPSocketClient_AsyncFuture::SendAndRecv()
 {
-	TSharedPtr<FBufferArchive> Packet = CreatePacket(0, TEXT("start packet"));
+	TSharedPtr<FArrayWriter> Packet = CreatePacket(0, TEXT("start packet"));
 	TFuture<bool> SendFuture = BeginSend(Packet);
 
 	TSharedPtr<TPromise<FRecvResult>> RecvPromise = MakeShared<TPromise<FRecvResult>>();
@@ -104,7 +104,7 @@ TFuture<FRecvResult> FTCPSocketClient_AsyncFuture::SendAndRecv()
 	return RecvPromise->GetFuture();
 }
 
-TFuture<bool> FTCPSocketClient_AsyncFuture::BeginSend(TSharedPtr<FBufferArchive> InPacket)
+TFuture<bool> FTCPSocketClient_AsyncFuture::BeginSend(TSharedPtr<FArrayWriter> InPacket)
 {
 	TSharedPtr<TPromise<bool>> Promise = MakeShared<TPromise<bool>>();
 

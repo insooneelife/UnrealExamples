@@ -3,12 +3,15 @@
 
 #include "UnrealExamplesGameMode.h"
 #include "Serialization/SerializationExamples.h"
+#include "ConvAI/ConvAIExamples.h"
 
 void AUnrealExamplesGameMode::StartPlay()
 {
 	Super::StartPlay();
 
-	SerializationExamples::AllExamples();
+	//SerializationExamples::AllExamples();
+
+	ConvAIExamples::AllExamples();
 }
 
 

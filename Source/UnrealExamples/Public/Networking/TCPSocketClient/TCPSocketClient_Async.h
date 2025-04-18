@@ -5,18 +5,19 @@
 #include "CoreMinimal.h"
 #include "NetworkMessage.h"
 #include "TCPSocketClientUtils.h"
+#include "Serialization/ArrayWriter.h"
 
 
 
 class UNREALEXAMPLES_API FTCPSocketClient_Async
 {
 public:
-	static TSharedPtr<FBufferArchive> CreatePacket(uint32 InType, const uint8* InPayload, int32 InPayloadSize);
+	static TSharedPtr<FArrayWriter> CreatePacket(uint32 InType, const uint8* InPayload, int32 InPayloadSize);
 
 	void Connect();
 	void Disconnect();
 
-	TSharedPtr<FBufferArchive> CreatePacket(uint32 Type, const FString& Text);
+	TSharedPtr<FArrayWriter> CreatePacket(uint32 Type, const FString& Text);
 
 private:
 	// all phase functions will be called at GameThread
