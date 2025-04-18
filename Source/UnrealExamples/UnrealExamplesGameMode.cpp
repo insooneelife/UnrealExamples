@@ -14,7 +14,7 @@ void AUnrealExamplesGameMode::StartPlay()
 
 	//ConvAIExamples::AllExamples(GetWorld());
 
-	ConvAITaskGraphExamples::ConvAITaskGraphExample(GetWorld());
+	ConvAITaskGraphExamples::AllExamples(GetWorld());
 }
 
 

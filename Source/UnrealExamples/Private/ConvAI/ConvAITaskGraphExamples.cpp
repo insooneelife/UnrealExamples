@@ -21,56 +21,135 @@
 
 void ConvAITaskGraphExamples::AllExamples(UWorld* World)
 {
-	ConvAITaskGraphExample(World);
+	ApiFlowTaskGraphExample(World);
+	DeviceFlowTaskGraphExample(World);
 }
 
 
-
-
-void ConvAITaskGraphExamples::ConvAITaskGraphExample(UWorld* World)
+void ConvAITaskGraphExamples::ApiFlowTaskGraphExample(UWorld* World)
 {
-	TSharedPtr<FFlowContext> FlowContext = MakeShared<FFlowContext>();
+	TSharedPtr<FApiFlowContext> Context = MakeShared<FApiFlowContext>();
+	Context->Reset();
+
 	FGraphEventRef AudioInputTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[FlowContext]()
+		[Context]()
 		{
-			AudioInputTaskFunction(FlowContext->AudioInput_Result);
+			AudioInputTaskFunction(Context->Audio_Result);
 		}, TStatId(), nullptr, ENamedThreads::AnyThread);
 
 	FGraphEventRef InputAudioGameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[FlowContext, World]()
+		[Context, World]()
 		{
-			GameTaskFunction(FlowContext->AudioInput_Result.InputAudioBuffer, World);
+			if(Context->Audio_Result.bSuccess)
+			{
+				GameTaskFunction(Context->Audio_Result.AudioBuffer, World);
+			}
 		}, TStatId(), AudioInputTask, ENamedThreads::GameThread);
 
 	FGraphEventRef SttApiEvent = FGraphEvent::CreateGraphEvent();
 	FGraphEventRef SttTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[FlowContext, SttApiEvent]()
+		[Context, SttApiEvent]()
 		{
-			SttApiTaskFunction(FlowContext->AudioInput_Result.InputAudioBuffer, SttApiEvent, FlowContext->SttApi_Result);
+			if (Context->Audio_Result.bSuccess)
+			{
+				SttApiTaskFunction(Context->Audio_Result.AudioBuffer, SttApiEvent, Context->Stt_Result);
+			}
+			else
+			{
+				SttApiEvent->DispatchSubsequents();
+			}
 		}, TStatId(), AudioInputTask, ENamedThreads::AnyThread);
 
 
 	FGraphEventRef LlmApiEvent = FGraphEvent::CreateGraphEvent();
 	FGraphEventRef LlmTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[FlowContext, LlmApiEvent]()
+		[Context, LlmApiEvent]()
 		{
-			LlmApiTaskFunction(FlowContext->SttApi_Result.SttMessage, LlmApiEvent, FlowContext->LlmApi_Result);
+			if (Context->Stt_Result.bSuccess)
+			{
+				LlmApiTaskFunction(Context->Stt_Result.Message, LlmApiEvent, Context->Llm_Result);
+			}
+			else
+			{
+				LlmApiEvent->DispatchSubsequents();
+			}
+
 		}, TStatId(), SttApiEvent, ENamedThreads::AnyThread);
 
 
 	FGraphEventRef TtsApiEvent = FGraphEvent::CreateGraphEvent();
 	FGraphEventRef TtsTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[FlowContext, TtsApiEvent]()
+		[Context, TtsApiEvent]()
 		{
-			TtsApiTaskFunction(FlowContext->LlmApi_Result.LlmMessage, TtsApiEvent, FlowContext->TtsApi_Result);
+			if (Context->Llm_Result.bSuccess)
+			{
+				TtsApiTaskFunction(Context->Llm_Result.Message, TtsApiEvent, Context->Tts_Result);
+			}
+			else
+			{
+				TtsApiEvent->DispatchSubsequents();
+			}
 		}, TStatId(), LlmApiEvent, ENamedThreads::AnyThread);
 
 
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[FlowContext, World]()
+		[Context, World]()
 		{
-			GameTaskFunction(FlowContext->TtsApi_Result.TtsAudioBuffer, World);
+			if (Context->Tts_Result.bSuccess)
+			{
+				GameTaskFunction(Context->Tts_Result.AudioBuffer, World);
+			}
 		}, TStatId(), TtsApiEvent, ENamedThreads::GameThread);
+}
+
+void ConvAITaskGraphExamples::DeviceFlowTaskGraphExample(UWorld* World)
+{
+	TSharedPtr<FDeviceFlowContext> Context = MakeShared<FDeviceFlowContext>();
+	Context->Reset();
+
+	FGraphEventRef AudioInputTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+		[Context]()
+		{
+			AudioInputTaskFunction(Context->Audio_Result);
+		}, TStatId(), nullptr, ENamedThreads::AnyThread);
+
+	FGraphEventRef SttTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+		[Context]()
+		{
+			if (Context->Audio_Result.bSuccess)
+			{
+				SttDeviceTaskFunction(Context->Audio_Result.AudioBuffer, Context->Stt_Result);
+			}
+		}, TStatId(), AudioInputTask, ENamedThreads::AnyThread);
+
+	FGraphEventRef LlmTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+		[Context]()
+		{
+			if (Context->Stt_Result.bSuccess)
+			{
+				LlmDeviceTaskFunction(Context->Stt_Result.Message, Context->Llm_Result);
+			}
+
+		}, TStatId(), SttTask, ENamedThreads::AnyThread);
+
+	FGraphEventRef TtsTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+		[Context]()
+		{
+			if (Context->Llm_Result.bSuccess)
+			{
+				TtsDeviceTaskFunction(Context->Llm_Result.Message, Context->Tts_Result);
+			}
+		}, TStatId(), LlmTask, ENamedThreads::AnyThread);
+
+
+	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+		[Context, World]()
+		{
+			if (Context->Tts_Result.bSuccess)
+			{
+				GameTaskFunction(Context->Tts_Result.AudioBuffer, World);
+			}
+		}, TStatId(), TtsTask, ENamedThreads::GameThread);
 }
 
 
@@ -78,7 +157,12 @@ void ConvAITaskGraphExamples::AudioInputTaskFunction(AudioInputTask_Result& OutR
 {
 	FConvAIModule::LogWithThreadInfo(TEXT("[AudioInputTask] Task started."));
 	FString RelativePath = FPaths::ProjectDir() / TEXT("Source/Python/output/audio.wav");
-	if (!FConvAIModule::LoadWavFileToBuffer(RelativePath, OutResult.InputAudioBuffer))
+
+	if (FConvAIModule::LoadWavFileToBuffer(RelativePath, OutResult.AudioBuffer))
+	{
+		OutResult.bSuccess = true;
+	}
+	else
 	{
 		FString LogMsg = FString::Printf(TEXT("[AudioInputTask] Load wave file failed.  Path : %s"), *RelativePath);
 		FConvAIModule::LogErrorWithThreadInfo(LogMsg);
@@ -100,8 +184,9 @@ void ConvAITaskGraphExamples::SttApiTaskFunction(
 				FWhisperResponse OutResponse;
 				if (FWhisperUtils::ParseResponse(InResponse, OutResponse))
 				{
-					OutResult.SttMessage = OutResponse.text;
-					FString LogMsg = FString::Printf(TEXT("[SttTask] Whisper response : %s"), *OutResult.SttMessage);
+					OutResult.bSuccess = true;
+					OutResult.Message = OutResponse.text;
+					FString LogMsg = FString::Printf(TEXT("[SttTask] Whisper response : %s"), *OutResult.Message);
 					FConvAIModule::LogWithThreadInfo(LogMsg);
 				}
 			}
@@ -118,7 +203,6 @@ void ConvAITaskGraphExamples::LlmApiTaskFunction(
 	const FString& InMessage, FGraphEventRef FinishEvent, LlmApiTask_Result& OutResult)
 {
 	FConvAIModule::LogWithThreadInfo(TEXT("[LlmTask] Task started."));
-
 	FString APIKey = FChatGPTUtils::GetAPIKey();
 	TSharedRef<IHttpRequest> Request = FChatGPTUtils::CreateRequest(APIKey, InMessage);
 
@@ -128,24 +212,26 @@ void ConvAITaskGraphExamples::LlmApiTaskFunction(
 		{
 			if (bWasSuccessful && InResponse.IsValid())
 			{
-				bool bSuccess = false;
 				FChatGPTResponse ChatGPTResponse;
 				if (FChatGPTUtils::ParseResponse(InResponse, ChatGPTResponse))
 				{
 					if (ChatGPTResponse.choices.Num() > 0)
 					{
-						bSuccess = true;
-						OutResult.LlmMessage = ChatGPTResponse.choices[0].message.content;
+						OutResult.bSuccess = true;
+						OutResult.Message = ChatGPTResponse.choices[0].message.content;
 
-						FString LogMsg = FString::Printf(TEXT("[LlmTask] Chat gpt response parsed.  %s"), *OutResult.LlmMessage);
+						FString LogMsg = FString::Printf(TEXT("[LlmTask] Chat gpt response parsed.  %s"), *OutResult.Message);
 						FConvAIModule::LogWithThreadInfo(LogMsg);
 					}
 				}
 
-				if (!bSuccess)
+				if (!OutResult.bSuccess)
 				{
-					OutResult.LlmMessage = TEXT("This is a dummy message shown due to a ChatGPT response failure.");
+					OutResult.Message = TEXT("This is a dummy message shown due to a ChatGPT response failure.");
 					FConvAIModule::LogErrorWithThreadInfo(TEXT("[LlmTask] Chat gpt request failed."));
+
+					// set this true for just example.
+					OutResult.bSuccess = true;
 				}
 			}
 
@@ -171,8 +257,9 @@ void ConvAITaskGraphExamples::TtsApiTaskFunction(
 		{
 			if (bWasSuccessful && InResponse.IsValid())
 			{
+				OutResult.bSuccess = true;
 				const TArray<uint8>& TtsAudioBuffer = InResponse->GetContent();
-				OutResult.TtsAudioBuffer = TtsAudioBuffer;
+				OutResult.AudioBuffer = TtsAudioBuffer;
 				FConvAIModule::LogWithThreadInfo(TEXT("[TtsTask] Tts request done."));
 			}
 
@@ -181,6 +268,44 @@ void ConvAITaskGraphExamples::TtsApiTaskFunction(
 
 	// Execute request
 	Request->ProcessRequest();
+}
+
+
+void ConvAITaskGraphExamples::SttDeviceTaskFunction(const TArray<uint8>& InAudioBuffer, SttDeviceTask_Result& OutResult)
+{
+	FConvAIModule::LogWithThreadInfo(TEXT("[SttDeviceTask] Task started."));
+
+	// implement GlobalSttDevice->Inference()
+	FPlatformProcess::Sleep(1);
+
+	// any message
+	OutResult.bSuccess = true;
+	OutResult.Message = TEXT("some stt message created by device with stt model.");
+}
+
+void ConvAITaskGraphExamples::LlmDeviceTaskFunction(const FString& InMessage, LlmDeviceTask_Result& OutResult)
+{
+	FConvAIModule::LogWithThreadInfo(TEXT("[LlmDeviceTask] Task started."));
+
+	// implement GlobalLlmDevice->Inference()
+	FPlatformProcess::Sleep(1);
+
+	// any message
+	OutResult.bSuccess = true;
+	OutResult.Message = TEXT("some llm message created by device with stt model.");
+}
+
+void ConvAITaskGraphExamples::TtsDeviceTaskFunction(const FString& InMessage, TtsDeviceTask_Result& OutResult)
+{
+	FConvAIModule::LogWithThreadInfo(TEXT("[TtsDeviceTask] Task started."));
+
+	// implement GlobalTtsDevice->Inference()
+	FPlatformProcess::Sleep(1);
+
+	// any audio
+	OutResult.bSuccess = true;
+	FString RelativePath = FPaths::ProjectDir() / TEXT("Source/Python/output/audio.wav");
+	if (FConvAIModule::LoadWavFileToBuffer(RelativePath, OutResult.AudioBuffer)){}
 }
 
 void ConvAITaskGraphExamples::GameTaskFunction(const TArray<uint8>& InAudioBuffer, const UWorld* InWorld)
