@@ -57,10 +57,9 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 		return;
 	}
 
-	// begin
-
 	TSharedPtr<FApiFlowContext> Context = MakeShared<FApiFlowContext>();
 	Context->Reset();
+	Context->OnBegin();
 
 	FGraphEventRef AudioInputTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[Context]()
@@ -147,7 +146,7 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 				Context->OnPostPlayGameSound(AudioBuffer, World, SoundWave, GlobalContext);
 			}
 
-			// end
+			Context->OnEnd();
 
 			// trigger this cycle again.
 			TriggerApiFlowTaskGraph(GlobalContext, World);
@@ -183,10 +182,10 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 		return;
 	}
 
-	// begin
 
 	TSharedPtr<FDeviceFlowContext> Context = MakeShared<FDeviceFlowContext>();
 	Context->Reset();
+	Context->OnBegin();
 
 	FGraphEventRef AudioInputTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[Context]()
@@ -234,7 +233,7 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 				TriggerDeviceConsumerFlowTaskGraph(GlobalContext, World);
 			}
 			
-			// end
+			Context->OnEnd();
 
 			// trigger this cycle again.
 			TriggerDeviceProducerFlowTaskGraph(GlobalContext, World);
@@ -262,9 +261,9 @@ void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(
 		return;
 	}
 
-	// begin
 	TSharedPtr<FDevicePlaySoundFlowContext> Context = MakeShared<FDevicePlaySoundFlowContext>();
 	Context->LlmMessage = GlobalContext->LlmMessage;
+	Context->OnBegin();
 
 	FGraphEventRef TtsTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[Context]()
@@ -288,7 +287,7 @@ void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(
 				Context->OnPostPlayGameSound(AudioBuffer, World, SoundWave, GlobalContext);
 			}
 
-			// end
+			Context->OnEnd();
 		}, TStatId(), TtsTask, ENamedThreads::GameThread);	
 }
 

@@ -95,50 +95,60 @@ public:
 
 public:
 
+	void OnBegin()
+	{
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnBegin ########"));
+	}
+
+	void OnEnd()
+	{
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnEnd ########"));
+	}
+
 	void OnPreCollectAudioInput()
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreCollectAudioInput ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPreCollectAudioInput ########"));
 	}
 
 	void OnPostCollectAudioInput(const AudioInputTask_Result& InResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostCollectAudioInput ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPostCollectAudioInput ########"));
 	}
 	
 	void OnPreSttApi(const TArray<uint8>& InAudioBuffer)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreSttApi ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPreSttApi ########"));
 	}
 
 	void OnPostSttApi(const SttApiTask_Result& InResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostSttApi ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPostSttApi ########"));
 	}
 
 	void OnPreLlmApi(const FString& InPrompt)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreLlmApi ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPreLlmApi ########"));
 	}
 
 	void OnPostLlmApi(const LlmApiTask_Result& InResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostLlmApi ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPostLlmApi ########"));
 	}
 
 	void OnPreTtsApi(const FString& InMessage)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreTtsApi ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPreTtsApi ########"));
 	}
 
 	void OnPostTtsApi(const TtsApiTask_Result& InResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostTtsApi ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPostTtsApi ########"));
 	}
 
 	// needs to check if world is valid
 	void OnPrePlayGameSound(const TArray<uint8>& InAudioBuffer, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPrePlayGameSound ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPrePlayGameSound ########"));
 	}
 
 	void OnPostPlayGameSound(
@@ -147,8 +157,10 @@ public:
 		const USoundWaveProcedural* const InSoundWave, 
 		TSharedPtr<FGlobalContext> GlobalContext)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostPlayGameSound ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FApiFlowContext] OnPostPlayGameSound ########"));
 	}
+
+	
 
 
 public:
@@ -169,45 +181,55 @@ public:
 		Llm_Result.Reset();
 	}
 
+	void OnBegin()
+	{
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnBegin ########"));
+	}
+
+	void OnEnd()
+	{
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnEnd ########"));
+	}
+
 	void OnPreCollectAudioInput()
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreCollectAudioInput ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnPreCollectAudioInput ########"));
 	}
 
 	void OnPostCollectAudioInput(const AudioInputTask_Result& InResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostCollectAudioInput ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnPostCollectAudioInput ########"));
 	}
 
 
 	void OnPreSttDevice(const TArray<uint8>& InAudioBuffer)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreSttDevice ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnPreSttDevice ########"));
 	}
 
 	void OnPostSttDevice(const SttDeviceTask_Result& InResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostSttDevice ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnPostSttDevice ########"));
 	}
 
 	void OnPreLlmDevice(const FString& InPrompt)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreLlmDevice ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnPreLlmDevice ########"));
 	}
 
 	void OnPostLlmDevice(const LlmDeviceTask_Result& InResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostLlmDevice ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnPostLlmDevice ########"));
 	}
 
 	void OnPreUpdateGameByLlm(const FString& InMessage, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreUpdateGameByLlm ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnPreUpdateGameByLlm ########"));
 	}
 
 	void OnPostUpdateGameByLlm(const LlmDeviceTask_Result& InResult, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostUpdateGameByLlm ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDeviceFlowContext] OnPostUpdateGameByLlm ########"));
 	}
 
 public:
@@ -225,19 +247,29 @@ public:
 		Tts_Result.Reset();
 	}
 
+	void OnBegin()
+	{
+		UE_LOG(LogTemp, Error, TEXT("[FDevicePlaySoundFlowContext] OnBegin ########"));
+	}
+
+	void OnEnd()
+	{
+		UE_LOG(LogTemp, Error, TEXT("[FDevicePlaySoundFlowContext] OnEnd ########"));
+	}
+
 	void OnPreTtsDevice(const FString& InMessage)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreTtsDevice ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDevicePlaySoundFlowContext] OnPreTtsDevice ########"));
 	}
 
 	void OnPostTtsDevice(const TtsDeviceTask_Result& InResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostTtsDevice ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDevicePlaySoundFlowContext] OnPostTtsDevice ########"));
 	}
 
 	void OnPrePlayGameSound(const TArray<uint8>& InAudioBuffer, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPrePlayGameSound ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDevicePlaySoundFlowContext] OnPrePlayGameSound ########"));
 	}
 
 	void OnPostPlayGameSound(
@@ -246,7 +278,7 @@ public:
 		const USoundWaveProcedural* const InSoundWave,
 		TSharedPtr<FGlobalContext> GlobalContext)
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostPlayGameSound ########"));
+		UE_LOG(LogTemp, Error, TEXT("[FDevicePlaySoundFlowContext] OnPostPlayGameSound ########"));
 	}
 public:
 	FString LlmMessage;
