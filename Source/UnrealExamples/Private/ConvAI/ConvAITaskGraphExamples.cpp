@@ -11,10 +11,8 @@
 
 #include "Async/Async.h"
 #include "Kismet/GameplayStatics.h"
-#include "Sound/SoundWave.h"
-#include "Sound/SoundWaveProcedural.h"
 #include "Audio.h"
-#include "Engine/World.h"
+
 #include "HAL/PlatformProcess.h"
 #include "Async/TaskGraphInterfaces.h"
 
@@ -58,8 +56,7 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 	}
 
 	TSharedPtr<FApiFlowContext> Context = MakeShared<FApiFlowContext>();
-	Context->Reset();
-	Context->OnBegin();
+	Context->OnBegin(GlobalContext);
 
 	FGraphEventRef AudioInputTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[Context]()
@@ -146,7 +143,7 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 				Context->OnPostPlayGameSound(AudioBuffer, World, SoundWave, GlobalContext);
 			}
 
-			Context->OnEnd();
+			Context->OnEnd(GlobalContext);
 
 			// trigger this cycle again.
 			TriggerApiFlowTaskGraph(GlobalContext, World);
@@ -184,8 +181,7 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 
 
 	TSharedPtr<FDeviceFlowContext> Context = MakeShared<FDeviceFlowContext>();
-	Context->Reset();
-	Context->OnBegin();
+	Context->OnBegin(GlobalContext);
 
 	FGraphEventRef AudioInputTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[Context]()
@@ -233,7 +229,7 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 				TriggerDeviceConsumerFlowTaskGraph(GlobalContext, World);
 			}
 			
-			Context->OnEnd();
+			Context->OnEnd(GlobalContext);
 
 			// trigger this cycle again.
 			TriggerDeviceProducerFlowTaskGraph(GlobalContext, World);
@@ -263,7 +259,7 @@ void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(
 
 	TSharedPtr<FDevicePlaySoundFlowContext> Context = MakeShared<FDevicePlaySoundFlowContext>();
 	Context->LlmMessage = GlobalContext->LlmMessage;
-	Context->OnBegin();
+	Context->OnBegin(GlobalContext);
 
 	FGraphEventRef TtsTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[Context]()
@@ -287,22 +283,20 @@ void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(
 				Context->OnPostPlayGameSound(AudioBuffer, World, SoundWave, GlobalContext);
 			}
 
-			Context->OnEnd();
+			Context->OnEnd(GlobalContext);
 		}, TStatId(), TtsTask, ENamedThreads::GameThread);	
 }
 
 void ConvAITaskGraphExamples::CollectAudioInput(AudioInputTask_Result& OutResult)
 {
-	FConvAIModule::LogWithThreadInfo(TEXT("[AudioInputTask] Task started."));
 	FString RelativePath = FPaths::ProjectDir() / TEXT("Source/Python/output/audio.wav");
-
 	if (FConvAIModule::LoadWavFileToBuffer(RelativePath, OutResult.AudioBuffer))
 	{
 		OutResult.bSuccess = true;
 	}
 	else
 	{
-		FString LogMsg = FString::Printf(TEXT("[AudioInputTask] Load wave file failed.  Path : %s"), *RelativePath);
+		FString LogMsg = FString::Printf(TEXT("[CollectAudioInput] Load wave file failed.  Path : %s"), *RelativePath);
 		FConvAIModule::LogErrorWithThreadInfo(LogMsg);
 	}
 }
@@ -314,7 +308,6 @@ void ConvAITaskGraphExamples::RequestSttApi(
 	FPostSttApiDelegate EndDelegate,
 	SttApiTask_Result& OutResult)
 {
-	FConvAIModule::LogWithThreadInfo(TEXT("[SttTask] Task started."));
 	TSharedRef<IHttpRequest> Request = FWhisperUtils::CreateRequest(InAudioBuffer);
 
 	Request->OnProcessRequestComplete().BindLambda(
@@ -327,9 +320,6 @@ void ConvAITaskGraphExamples::RequestSttApi(
 				{
 					OutResult.bSuccess = true;
 					OutResult.Message = OutResponse.text;
-					FString LogMsg = FString::Printf(TEXT("[SttTask] Whisper response : %s"), *OutResult.Message);
-					FConvAIModule::LogWithThreadInfo(LogMsg);
-
 				}
 			}
 
@@ -348,7 +338,6 @@ void ConvAITaskGraphExamples::RequestLlmApi(
 	FPostLlmApiDelegate EndDelegate,
 	LlmApiTask_Result& OutResult)
 {
-	FConvAIModule::LogWithThreadInfo(TEXT("[LlmTask] Task started."));
 	FString APIKey = FChatGPTUtils::GetAPIKey();
 	TSharedRef<IHttpRequest> Request = FChatGPTUtils::CreateRequest(APIKey, InMessage);
 
@@ -365,16 +354,13 @@ void ConvAITaskGraphExamples::RequestLlmApi(
 					{
 						OutResult.bSuccess = true;
 						OutResult.Message = ChatGPTResponse.choices[0].message.content;
-
-						FString LogMsg = FString::Printf(TEXT("[LlmTask] Chat gpt response parsed.  %s"), *OutResult.Message);
-						FConvAIModule::LogWithThreadInfo(LogMsg);
 					}
 				}
 
 				if (!OutResult.bSuccess)
 				{
 					OutResult.Message = TEXT("This is a dummy message shown due to a ChatGPT response failure.");
-					FConvAIModule::LogErrorWithThreadInfo(TEXT("[LlmTask] Chat gpt request failed."));
+					FConvAIModule::LogErrorWithThreadInfo(TEXT("[RequestLlmApi] Chat gpt request failed."));
 
 					// set this true for just example.
 					OutResult.bSuccess = true;
@@ -396,7 +382,6 @@ void ConvAITaskGraphExamples::RequestTtsApi(
 	FPostTtsApiDelegate EndDelegate,
 	TtsApiTask_Result& OutResult)
 {
-	FConvAIModule::LogWithThreadInfo(TEXT("[TtsTask] Task started."));
 	FTTSRequestBody Body;
 	Body.Data = InMessage;
 	TSharedRef<IHttpRequest> Request = FTtsUtils::CreateRequest(Body);
@@ -410,7 +395,6 @@ void ConvAITaskGraphExamples::RequestTtsApi(
 				OutResult.bSuccess = true;
 				const TArray<uint8>& TtsAudioBuffer = InResponse->GetContent();
 				OutResult.AudioBuffer = TtsAudioBuffer;
-				FConvAIModule::LogWithThreadInfo(TEXT("[TtsTask] Tts request done."));
 			}
 
 			EndDelegate.ExecuteIfBound(OutResult);
@@ -424,8 +408,6 @@ void ConvAITaskGraphExamples::RequestTtsApi(
 
 void ConvAITaskGraphExamples::ProcessSttDevice(const TArray<uint8>& InAudioBuffer, SttDeviceTask_Result& OutResult)
 {
-	FConvAIModule::LogWithThreadInfo(TEXT("[SttDeviceTask] Task started."));
-
 	// implement GlobalSttDevice->Inference()
 	FPlatformProcess::Sleep(1);
 
@@ -436,8 +418,6 @@ void ConvAITaskGraphExamples::ProcessSttDevice(const TArray<uint8>& InAudioBuffe
 
 void ConvAITaskGraphExamples::ProcessLlmDevice(const FString& InMessage, LlmDeviceTask_Result& OutResult)
 {
-	FConvAIModule::LogWithThreadInfo(TEXT("[LlmDeviceTask] Task started."));
-
 	// implement GlobalLlmDevice->Inference()
 	FPlatformProcess::Sleep(1);
 
@@ -448,8 +428,6 @@ void ConvAITaskGraphExamples::ProcessLlmDevice(const FString& InMessage, LlmDevi
 
 void ConvAITaskGraphExamples::ProcessTtsDevice(const FString& InMessage, TtsDeviceTask_Result& OutResult)
 {
-	FConvAIModule::LogWithThreadInfo(TEXT("[TtsDeviceTask] Task started."));
-
 	// implement GlobalTtsDevice->Inference()
 	FPlatformProcess::Sleep(1);
 
@@ -462,19 +440,16 @@ void ConvAITaskGraphExamples::ProcessTtsDevice(const FString& InMessage, TtsDevi
 USoundWaveProcedural* ConvAITaskGraphExamples::PlayGameSound(
 	const TArray<uint8>& InAudioBuffer, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
 {
-	FConvAIModule::LogWithThreadInfo(TEXT("[GameTaskFunction] Task started."));
 	if (!IsValid(InWorld))
 	{
-		FConvAIModule::LogErrorWithThreadInfo(TEXT("[GameTaskFunction] World is not valid."));
+		FConvAIModule::LogErrorWithThreadInfo(TEXT("[ProcessTtsDevice] World is not valid."));
 		return nullptr;
 	}
 
 	USoundWaveProcedural* SoundWav = FConvAIModule::CreateSoundWaveFromWav(InAudioBuffer);
 	if (IsValid(SoundWav))
 	{
-		FConvAIModule::LogWithThreadInfo(TEXT("[GameTaskFunction] Play sound."));
 		UGameplayStatics::PlaySound2D(InWorld, SoundWav);
-
 		return SoundWav;
 	}
 
