@@ -79,6 +79,7 @@ class FGlobalContext : public TSharedFromThis<FGlobalContext, ESPMode::ThreadSaf
 {
 public:
 	TArray<FString> StackLlmMessages;
+	FString LlmMessage;
 };
 
 class FApiFlowContext : public TSharedFromThis<FApiFlowContext, ESPMode::ThreadSafe>
@@ -166,7 +167,6 @@ public:
 		Audio_Result.Reset();
 		Stt_Result.Reset();
 		Llm_Result.Reset();
-		Tts_Result.Reset();
 	}
 
 	void OnPreCollectAudioInput()
@@ -200,6 +200,31 @@ public:
 		UE_LOG(LogTemp, Error, TEXT("OnPostLlmDevice ########"));
 	}
 
+	void OnPreUpdateGameByLlm(const FString& InMessage, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
+	{
+		UE_LOG(LogTemp, Error, TEXT("OnPreUpdateGameByLlm ########"));
+	}
+
+	void OnPostUpdateGameByLlm(const LlmDeviceTask_Result& InResult, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
+	{
+		UE_LOG(LogTemp, Error, TEXT("OnPostUpdateGameByLlm ########"));
+	}
+
+public:
+	AudioInputTask_Result Audio_Result;
+	SttDeviceTask_Result Stt_Result;
+	LlmDeviceTask_Result Llm_Result;
+};
+
+class FDevicePlaySoundFlowContext : public TSharedFromThis<FDevicePlaySoundFlowContext, ESPMode::ThreadSafe>
+{
+public:
+	void Reset()
+	{
+		LlmMessage.Reset();
+		Tts_Result.Reset();
+	}
+
 	void OnPreTtsDevice(const FString& InMessage)
 	{
 		UE_LOG(LogTemp, Error, TEXT("OnPreTtsDevice ########"));
@@ -223,24 +248,10 @@ public:
 	{
 		UE_LOG(LogTemp, Error, TEXT("OnPostPlayGameSound ########"));
 	}
-
-	void OnPreUpdateGameByLlm(const FString& InMessage, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
-	{
-		UE_LOG(LogTemp, Error, TEXT("OnPreUpdateGameByLlm ########"));
-	}
-
-	void OnPostUpdateGameByLlm(const LlmDeviceTask_Result& InResult, const UWorld* const InWorld, TSharedPtr<FGlobalContext> GlobalContext)
-	{
-		UE_LOG(LogTemp, Error, TEXT("OnPostUpdateGameByLlm ########"));
-	}
-
 public:
-	AudioInputTask_Result Audio_Result;
-	SttDeviceTask_Result Stt_Result;
-	LlmDeviceTask_Result Llm_Result;
+	FString LlmMessage;
 	TtsDeviceTask_Result Tts_Result;
 };
-
 
 class ConvAITaskGraphExamples
 {

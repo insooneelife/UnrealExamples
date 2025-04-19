@@ -57,6 +57,8 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 		return;
 	}
 
+	// begin
+
 	TSharedPtr<FApiFlowContext> Context = MakeShared<FApiFlowContext>();
 	Context->Reset();
 
@@ -145,6 +147,8 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 				Context->OnPostPlayGameSound(AudioBuffer, World, SoundWave, GlobalContext);
 			}
 
+			// end
+
 			// trigger this cycle again.
 			TriggerApiFlowTaskGraph(GlobalContext, World);
 		}, TStatId(), TtsApiEvent, ENamedThreads::GameThread);
@@ -178,6 +182,8 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerDeviceProducerFlowTaskGraph] World is not valid."));
 		return;
 	}
+
+	// begin
 
 	TSharedPtr<FDeviceFlowContext> Context = MakeShared<FDeviceFlowContext>();
 	Context->Reset();
@@ -218,7 +224,7 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 	FGraphEventRef GameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[GlobalContext, Context, World]()
 		{
-			if (Context->Tts_Result.bSuccess)
+			if (Context->Llm_Result.bSuccess)
 			{
 				const FString& Message = Context->Llm_Result.Message;
 				Context->OnPreUpdateGameByLlm(Message, World, GlobalContext);
@@ -228,6 +234,8 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 				TriggerDeviceConsumerFlowTaskGraph(GlobalContext, World);
 			}
 			
+			// end
+
 			// trigger this cycle again.
 			TriggerDeviceProducerFlowTaskGraph(GlobalContext, World);
 		}, TStatId(), LlmTask, ENamedThreads::GameThread);
@@ -245,7 +253,8 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 // [GameTask]
 //
 
-void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World)
+void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(
+	TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World)
 {	
 	if (!IsValid(World))
 	{
@@ -253,17 +262,18 @@ void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(TSharedPtr<FGlo
 		return;
 	}
 
-	TSharedPtr<FDeviceFlowContext> Context = MakeShared<FDeviceFlowContext>();
+	// begin
+	TSharedPtr<FDevicePlaySoundFlowContext> Context = MakeShared<FDevicePlaySoundFlowContext>();
+	Context->LlmMessage = GlobalContext->LlmMessage;
+
 	FGraphEventRef TtsTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[Context]()
-		{
-			if (Context->Llm_Result.bSuccess)
-			{
-				const FString& Message = Context->Llm_Result.Message;
-				Context->OnPreTtsDevice(Message);
-				ProcessTtsDevice(Message, Context->Tts_Result);
-				Context->OnPostTtsDevice(Context->Tts_Result);
-			}
+		{			
+			const FString& Message = Context->LlmMessage;
+			Context->OnPreTtsDevice(Message);
+			ProcessTtsDevice(Message, Context->Tts_Result);
+			Context->OnPostTtsDevice(Context->Tts_Result);
+			
 		}, TStatId(), nullptr, ENamedThreads::AnyThread);
 
 
@@ -277,6 +287,8 @@ void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(TSharedPtr<FGlo
 				USoundWaveProcedural* SoundWave = PlayGameSound(AudioBuffer, World, GlobalContext);
 				Context->OnPostPlayGameSound(AudioBuffer, World, SoundWave, GlobalContext);
 			}
+
+			// end
 		}, TStatId(), TtsTask, ENamedThreads::GameThread);	
 }
 
@@ -478,7 +490,7 @@ void ConvAITaskGraphExamples::UpdateGameByLlm(
 
 	if(GlobalContext->StackLlmMessages.Num() > 3)
 	{
-		GlobalContext->StackLlmMessages[1];
+		GlobalContext->LlmMessage = GlobalContext->StackLlmMessages[1];
 		GlobalContext->StackLlmMessages.Empty();
 	}
 }
