@@ -18,10 +18,14 @@
 		{
 			"Name": "Bridge",
 			"Enabled": true
+		},
+		{
+			"Name": "TestFramework",
+			"Enabled": true
+		},
+		{
+			"Name": "RuntimeTests",
+			"Enabled": true
 		}
-	],
-	"TargetPlatforms": [],
-	"AdditionalRootDirectories": [],
-	"AdditionalPluginDirectories": [],
-	"EpicSampleNameHash": ""
+	]
 }
