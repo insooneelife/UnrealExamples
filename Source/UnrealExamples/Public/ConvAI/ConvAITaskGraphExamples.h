@@ -333,9 +333,9 @@ class ConvAITaskGraphExamples
 public:
 
 	static void AllExamples(UWorld* const World);
-	static void TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World);
-	static void TriggerDeviceProducerFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World);
-	static void TriggerDeviceConsumerFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World);
+	static void TriggerApiTaskFlow(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World);
+	static void TriggerDeviceProducerTaskFlow(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World);
+	static void TriggerDeviceConsumerTaskFlow(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World);
 
 	static void CollectAudioInput(AudioInputTask_Result& OutResult);
 	static void RequestSttApi(const TArray<uint8>& InAudioBuffer, FGraphEventRef FinishEvent, FPostSttApiDelegate EndDelegate, SttApiTask_Result& OutResult);

@@ -21,8 +21,8 @@ void ConvAITaskGraphExamples::AllExamples(UWorld* const World)
 {
 	TSharedPtr<FGlobalContext> GlobalContext = MakeShared<FGlobalContext>();
 
-	TriggerApiFlowTaskGraph(GlobalContext, World);
-	TriggerDeviceProducerFlowTaskGraph(GlobalContext, World);
+	TriggerApiTaskFlow(GlobalContext, World);
+	TriggerDeviceProducerTaskFlow(GlobalContext, World);
 }
 
 // TriggerApiFlowTaskGraph
@@ -47,11 +47,11 @@ void ConvAITaskGraphExamples::AllExamples(UWorld* const World)
 //								   v
 //						TriggerApiFlowTaskGraph
 
-void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World)
+void ConvAITaskGraphExamples::TriggerApiTaskFlow(TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World)
 {
 	if (!IsValid(World))
 	{
-		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerApiFlowTaskGraph] World is not valid."));
+		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerApiTaskFlow] World is not valid."));
 		return;
 	}
 
@@ -146,7 +146,7 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 			Context->OnEnd(GlobalContext);
 
 			// trigger this cycle again.
-			TriggerApiFlowTaskGraph(GlobalContext, World);
+			TriggerApiTaskFlow(GlobalContext, World);
 		}, TStatId(), TtsApiEvent, ENamedThreads::GameThread);
 }
 
@@ -170,12 +170,12 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 //		v											v
 // TriggerDeviceProducerFlowTaskGraph		(if success) TriggerDeviceConsumerFlowTaskGraph
 
-void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
+void ConvAITaskGraphExamples::TriggerDeviceProducerTaskFlow(
 	TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World)
 {
 	if (!IsValid(World))
 	{
-		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerDeviceProducerFlowTaskGraph] World is not valid."));
+		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerDeviceProducerTaskFlow] World is not valid."));
 		return;
 	}
 
@@ -226,13 +226,13 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 				UpdateGameByLlm(Message, World, GlobalContext);
 				Context->OnPostUpdateGameByLlm(Context->Llm_Result, World, GlobalContext);
 
-				TriggerDeviceConsumerFlowTaskGraph(GlobalContext, World);
+				TriggerDeviceConsumerTaskFlow(GlobalContext, World);
 			}
 			
 			Context->OnEnd(GlobalContext);
 
 			// trigger this cycle again.
-			TriggerDeviceProducerFlowTaskGraph(GlobalContext, World);
+			TriggerDeviceProducerTaskFlow(GlobalContext, World);
 		}, TStatId(), LlmTask, ENamedThreads::GameThread);
 
 
@@ -248,12 +248,12 @@ void ConvAITaskGraphExamples::TriggerDeviceProducerFlowTaskGraph(
 // [GameTask]
 //
 
-void ConvAITaskGraphExamples::TriggerDeviceConsumerFlowTaskGraph(
+void ConvAITaskGraphExamples::TriggerDeviceConsumerTaskFlow(
 	TSharedPtr<FGlobalContext> GlobalContext, UWorld* const World)
 {	
 	if (!IsValid(World))
 	{
-		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerDeviceConsumerFlowTaskGraph] World is not valid."));
+		FConvAIModule::LogErrorWithThreadInfo(TEXT("[TriggerDeviceConsumerTaskFlow] World is not valid."));
 		return;
 	}
 
