@@ -52,7 +52,7 @@ void ConvAITaskGraphExamples::TriggerApiFlowTaskGraph(TSharedPtr<FGlobalContext>
 	FGraphEventRef InputAudioGameTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
 		[GlobalContext, Context, World]()
 		{
-			if (!Context->Audio_Result.bSuccess)
+			if (!Context->Audio_Result.bSuccess) 
 			{
 				return;
 			}
