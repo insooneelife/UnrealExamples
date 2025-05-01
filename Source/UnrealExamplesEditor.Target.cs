@@ -11,6 +11,6 @@ public class UnrealExamplesEditorTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		bOverrideBuildEnvironment = true;
 
-		ExtraModuleNames.AddRange( new string[] { "UnrealExamples" } );
+		ExtraModuleNames.AddRange( new string[] { "UnrealExamples", "UnrealExamplesEditor" } );
 	}
 }

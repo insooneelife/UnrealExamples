@@ -400,7 +400,7 @@ public:
 	TtsDeviceTask_Result Tts_Result;
 };
 
-class ConvAITaskGraphExamples
+class UNREALEXAMPLES_API ConvAITaskGraphExamples
 {
 public:
 
